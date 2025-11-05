@@ -1,5 +1,5 @@
 name: modules
-title: Default Title
+title: LB1688 Agentic AI with Llama Stack and 3rd party Frameworks
 version: master
 nav:
   - modules/ROOT/nav.adoc

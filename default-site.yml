@@ -1,6 +1,6 @@
 ---
 site:
-  title: LB1688 Agentic AI with Llama Stack and 3rd party Frameworks
+  title: "LB1688 Agentic AI with Llama Stack and 3rd party Frameworks"
   url: https://redhat-scholars.github.io/course-template
   start_page: modules::index.adoc
 
