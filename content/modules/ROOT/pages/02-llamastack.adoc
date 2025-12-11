@@ -5,7 +5,7 @@
 apiVersion: llamastack.io/v1alpha1
 kind: LlamaStackDistribution
 metadata:
-  name: llamastack-{{user}}
+  name: llamastack-distribution-vllm
 spec:
   replicas: 1
   server:
