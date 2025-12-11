@@ -1,3 +1,23 @@
 = Deploying LlamaStack
 
-
+[source,yaml,role="copypaste",subs=attributes+]
+----
+apiVersion: llamastack.io/v1alpha1
+kind: LlamaStackDistribution
+metadata:
+  name: llamastack-{{user}}
+spec:
+  replicas: 1
+  server:
+    distribution:
+      name: starter
+    containerSpec:
+      env:
+      - name: VLLM_URL 
+        value: "{{litemaas_url}}"
+      - name: VLLM_API_TOKEN
+        value: "{{api_token}}"
+    storage:
+      size: "20Gi"
+      mountPath: "/home/lls/.lls"
+----
