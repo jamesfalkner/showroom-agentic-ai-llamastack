@@ -1,5 +1,12 @@
 = Deploying LlamaStack
 
+[source,bash,role="copypaste",subs=attributes+]
+----
+git clone https://github.com/burrsutter/fantaco-redhat-one-2026
+cd fantaco-redhat-one-2026/
+---
+
+
 [source,yaml,role="copypaste",subs=attributes+]
 ----
 apiVersion: llamastack.io/v1alpha1
@@ -21,3 +28,9 @@ spec:
       size: "20Gi"
       mountPath: "/home/lls/.lls"
 ----
+
+[source,bash,role="copypaste",subs=attributes+]
+----
+oc apply -f llamastack-script/llamastack-distribution-vllm.yaml
+---
+
