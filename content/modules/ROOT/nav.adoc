@@ -1,6 +1,6 @@
 // # Defaults to displaying index.adoc to start
 * xref:02-llamastack.adoc[2. Deploying LlamaStack]
-* xref:03-configure-llamastack.adoc[3. Configuring LlamaStack]
+* xref:03-exploring-llamastack.adoc[3. Exploring LlamaStack]
 * xref:04-RAG.adoc[4. RAG with LlamaStack]
 * xref:04-RAG.adoc[5. Agentic AI and 3rd Party Frameworks]
 * xref:04-RAG.adoc[6. Model Context Protocol (MCP)]

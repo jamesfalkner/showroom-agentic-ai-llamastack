@@ -1,0 +1,43 @@
+= Exploring LlamaStack
+
+== Connecting to LlamaStack
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+export LLAMA_STACK_BASE_URL=http://llamastack-distribution-vllm-service:8321
+export INFERENCE_MODEL=vllm/qwen3-14b-gaudi
+----
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+echo "LLAMA_STACK_BASE_URL="$LLAMA_STACK_BASE_URL
+echo "INFERENCE_MODEL="$INFERENCE_MODEL
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+LLAMA_STACK_BASE_URL=http://llamastack-distribution-vllm-service:8321
+INFERENCE_MODEL=vllm/qwen3-14b-gaudi
+----
+
+== List available models
+
+[source,bash,role="copypaste",subs=attributes+]
+----
+curl -sS $LLAMA_STACK_BASE_URL/v1/models \
+     -H "Content-Type: application/json" \
+     | jq -r '.data[].identifier'
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+vllm/qwen3-14b-gaudi
+bedrock/meta.llama3-1-8b-instruct-v1:0
+bedrock/meta.llama3-1-70b-instruct-v1:0
+bedrock/meta.llama3-1-405b-instruct-v1:0
+sentence-transformers/nomic-ai/nomic-embed-text-v1.5
+----
