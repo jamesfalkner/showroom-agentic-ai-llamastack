@@ -23,6 +23,7 @@ LLAMA_STACK_BASE_URL=http://llamastack-distribution-vllm-service:8321
 INFERENCE_MODEL=vllm/qwen3-14b-gaudi
 ----
 
+[.console-input]
 == List available models
 
 [source,bash,role="copypaste",subs=attributes+]
@@ -41,3 +42,252 @@ bedrock/meta.llama3-1-70b-instruct-v1:0
 bedrock/meta.llama3-1-405b-instruct-v1:0
 sentence-transformers/nomic-ai/nomic-embed-text-v1.5
 ----
+
+== List APIs
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+curl -sS $LLAMA_STACK_BASE_URL/openapi.json \
+     | jq '.paths | keys'
+----
+
+[.console-output]
+[source,json]
+----
+[
+  "/v1/agents",
+  "/v1/agents/{agent_id}",
+  "/v1/agents/{agent_id}/session",
+  "/v1/agents/{agent_id}/session/{session_id}",
+  "/v1/agents/{agent_id}/session/{session_id}/turn",
+  "/v1/agents/{agent_id}/session/{session_id}/turn/{turn_id}",
+  "/v1/agents/{agent_id}/session/{session_id}/turn/{turn_id}/resume",
+  "/v1/agents/{agent_id}/session/{session_id}/turn/{turn_id}/step/{step_id}",
+  "/v1/agents/{agent_id}/sessions",
+  "/v1/batches",
+  "/v1/batches/{batch_id}",
+  "/v1/batches/{batch_id}/cancel",
+  "/v1/chat/completions",
+  "/v1/chat/completions/{completion_id}",
+  "/v1/completions",
+  "/v1/conversations",
+  "/v1/conversations/{conversation_id}",
+  "/v1/conversations/{conversation_id}/items",
+  "/v1/conversations/{conversation_id}/items/{item_id}",
+  "/v1/datasetio/append-rows/{dataset_id}",
+  "/v1/datasetio/iterrows/{dataset_id}",
+  "/v1/datasets",
+  "/v1/datasets/{dataset_id}",
+  "/v1/embeddings",
+  "/v1/eval/benchmarks",
+  "/v1/eval/benchmarks/{benchmark_id}",
+  "/v1/eval/benchmarks/{benchmark_id}/evaluations",
+  "/v1/eval/benchmarks/{benchmark_id}/jobs",
+  "/v1/eval/benchmarks/{benchmark_id}/jobs/{job_id}",
+  "/v1/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result",
+  "/v1/files",
+  "/v1/files/{file_id}",
+  "/v1/files/{file_id}/content",
+  "/v1/health",
+  "/v1/inspect/routes",
+  "/v1/models",
+  "/v1/models/{model_id}",
+  "/v1/moderations",
+  "/v1/openai/v1/batches",
+  "/v1/openai/v1/batches/{batch_id}",
+  "/v1/openai/v1/batches/{batch_id}/cancel",
+  "/v1/openai/v1/chat/completions",
+  "/v1/openai/v1/chat/completions/{completion_id}",
+  "/v1/openai/v1/completions",
+  "/v1/openai/v1/embeddings",
+  "/v1/openai/v1/files",
+  "/v1/openai/v1/files/{file_id}",
+  "/v1/openai/v1/files/{file_id}/content",
+  "/v1/openai/v1/models",
+  "/v1/openai/v1/moderations",
+  "/v1/openai/v1/responses",
+  "/v1/openai/v1/responses/{response_id}",
+  "/v1/openai/v1/responses/{response_id}/input_items",
+  "/v1/openai/v1/vector_stores",
+  "/v1/openai/v1/vector_stores/{vector_store_id}",
+  "/v1/openai/v1/vector_stores/{vector_store_id}/file_batches",
+  "/v1/openai/v1/vector_stores/{vector_store_id}/file_batches/{batch_id}",
+  "/v1/openai/v1/vector_stores/{vector_store_id}/file_batches/{batch_id}/cancel",
+  "/v1/openai/v1/vector_stores/{vector_store_id}/file_batches/{batch_id}/files",
+  "/v1/openai/v1/vector_stores/{vector_store_id}/files",
+  "/v1/openai/v1/vector_stores/{vector_store_id}/files/{file_id}",
+  "/v1/openai/v1/vector_stores/{vector_store_id}/files/{file_id}/content",
+  "/v1/openai/v1/vector_stores/{vector_store_id}/search",
+  "/v1/post-training/job/artifacts",
+  "/v1/post-training/job/cancel",
+  "/v1/post-training/job/status",
+  "/v1/post-training/jobs",
+  "/v1/post-training/preference-optimize",
+  "/v1/post-training/supervised-fine-tune",
+  "/v1/prompts",
+  "/v1/prompts/{prompt_id}",
+  "/v1/prompts/{prompt_id}/set-default-version",
+  "/v1/prompts/{prompt_id}/versions",
+  "/v1/providers",
+  "/v1/providers/{provider_id}",
+  "/v1/responses",
+  "/v1/responses/{response_id}",
+  "/v1/responses/{response_id}/input_items",
+  "/v1/safety/run-shield",
+  "/v1/scoring-functions",
+  "/v1/scoring-functions/{scoring_fn_id}",
+  "/v1/scoring/score",
+  "/v1/scoring/score-batch",
+  "/v1/shields",
+  "/v1/shields/{identifier}",
+  "/v1/tool-runtime/invoke",
+  "/v1/tool-runtime/list-tools",
+  "/v1/tool-runtime/rag-tool/insert",
+  "/v1/tool-runtime/rag-tool/query",
+  "/v1/toolgroups",
+  "/v1/toolgroups/{toolgroup_id}",
+  "/v1/tools",
+  "/v1/tools/{tool_name}",
+  "/v1/vector-io/insert",
+  "/v1/vector-io/query",
+  "/v1/vector_stores",
+  "/v1/vector_stores/{vector_store_id}",
+  "/v1/vector_stores/{vector_store_id}/file_batches",
+  "/v1/vector_stores/{vector_store_id}/file_batches/{batch_id}",
+  "/v1/vector_stores/{vector_store_id}/file_batches/{batch_id}/cancel",
+  "/v1/vector_stores/{vector_store_id}/file_batches/{batch_id}/files",
+  "/v1/vector_stores/{vector_store_id}/files",
+  "/v1/vector_stores/{vector_store_id}/files/{file_id}",
+  "/v1/vector_stores/{vector_store_id}/files/{file_id}/content",
+  "/v1/vector_stores/{vector_store_id}/search",
+  "/v1/version",
+  "/v1alpha/agents",
+  "/v1alpha/agents/{agent_id}",
+  "/v1alpha/agents/{agent_id}/session",
+  "/v1alpha/agents/{agent_id}/session/{session_id}",
+  "/v1alpha/agents/{agent_id}/session/{session_id}/turn",
+  "/v1alpha/agents/{agent_id}/session/{session_id}/turn/{turn_id}",
+  "/v1alpha/agents/{agent_id}/session/{session_id}/turn/{turn_id}/resume",
+  "/v1alpha/agents/{agent_id}/session/{session_id}/turn/{turn_id}/step/{step_id}",
+  "/v1alpha/agents/{agent_id}/sessions",
+  "/v1alpha/eval/benchmarks",
+  "/v1alpha/eval/benchmarks/{benchmark_id}",
+  "/v1alpha/eval/benchmarks/{benchmark_id}/evaluations",
+  "/v1alpha/eval/benchmarks/{benchmark_id}/jobs",
+  "/v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}",
+  "/v1alpha/eval/benchmarks/{benchmark_id}/jobs/{job_id}/result",
+  "/v1alpha/inference/rerank",
+  "/v1alpha/post-training/job/artifacts",
+  "/v1alpha/post-training/job/cancel",
+  "/v1alpha/post-training/job/status",
+  "/v1alpha/post-training/jobs",
+  "/v1alpha/post-training/preference-optimize",
+  "/v1alpha/post-training/supervised-fine-tune",
+  "/v1beta/datasetio/append-rows/{dataset_id}",
+  "/v1beta/datasetio/iterrows/{dataset_id}",
+  "/v1beta/datasets",
+  "/v1beta/datasets/{dataset_id}"
+]
+----
+
+== ChatCompletion API
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+QUESTION="what model are you?"
+
+curl -sS $LLAMA_STACK_BASE_URL/v1/chat/completions \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer fake" \
+    -d "{
+       \"model\": \"$INFERENCE_MODEL\",
+       \"messages\": [{\"role\": \"user\", \"content\": \"$QUESTION\"}],
+       \"temperature\": 0.0
+     }" | jq -r '.choices[0].message.content'
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+<think>
+Okay, the user is asking, "what model are you?" I need to respond accurately. First, I should confirm my identity as Qwen, the large language model developed by Alibaba Cloud. Then, I should mention my capabilities, like answering questions, creating text, and more. Also, I should invite the user to ask any questions they have. Let me make sure the response is clear and friendly.
+</think>
+
+I am Qwen, a large language model developed by Alibaba Cloud. I can answer questions, create text, and assist with various tasks. How can I help you today?
+----
+
+
+== Response API
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+export QUESTION="What is the capital of Italy?"
+
+curl -sS "$LLAMA_STACK_BASE_URL/v1/responses" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $API_KEY" \
+    -d "{
+      \"model\": \"$INFERENCE_MODEL\",
+      \"input\": \"$QUESTION\"
+    }" | jq -r '.output[0].content[0].text'
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+<think>
+Okay, the user is asking for the capital of Italy. Let me think. I know that many countries have capitals named after themselves, like Rome for Italy, but I should confirm. Wait, isn't Rome the capital? Yes, I'm pretty sure that's correct. Let me double-check in case there's any confusion with other cities. For example, sometimes people might confuse it with Florence or Venice, but those are major cities, not the capital. Also, the Italian government is based in Rome. So, the answer should be Rome. I don't think there's any recent change to that. Yeah, Rome is definitely the capital of Italy.
+</think>
+
+The capital of Italy is **Rome**. It is a historic city known for its rich cultural heritage, ancient landmarks like the Colosseum and Vatican City, and its role as the political and administrative center of the country.
+----
+
+
+== Tools
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+curl -sS -H "Content-Type: application/json" $LLAMA_STACK_BASE_URL/v1/toolgroups | jq
+----
+
+[.console-output]
+[source,json,subs=attributes+]
+----
+{
+  "data": [
+    {
+      "identifier": "builtin::websearch",
+      "provider_resource_id": "builtin::websearch",
+      "provider_id": "tavily-search",<1>
+      "type": "tool_group",
+      "mcp_endpoint": null,
+      "args": null
+    },
+    {
+      "identifier": "builtin::rag",
+      "provider_resource_id": "builtin::rag",
+      "provider_id": "rag-runtime",<2>
+      "type": "tool_group",
+      "mcp_endpoint": null,
+      "args": null
+    }
+  ]
+}
+----
+<1> tavily-search: use Tavily for web searches made by the Agent
+<2> Use built-in RAG
+
+
+== MCP
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+curl -sS -H "Content-Type: application/json" $LLAMA_STACK_BASE_URL/v1/toolgroups | jq -r '.data[] | select(.provider_id == 
+  "model-context-protocol") | .identifier
+----
+
