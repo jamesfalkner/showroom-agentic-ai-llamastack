@@ -11,17 +11,12 @@ git clone https://github.com/burrsutter/fantaco-redhat-one-2026
 cd fantaco-redhat-one-2026/
 ----
 
-Review the Llama Stack Server manifest at *llama-stack-scripts/llamastack-distribution-vllm.yaml*
+Review the Llama Stack Server manifest below and apply by copy and paste the command in the terminal in order to install a LlamaStack Distribution for vLLM using Model-as-a-Service (LiteMaaS):
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
-cat llama-stack-scripts/llamastack-distribution-vllm.yaml
-----
-
-[.console-output]
-[source,yaml,subs=attributes+]
-----
+oc apply -f - <<'EOF'
 apiVersion: llamastack.io/v1alpha1
 kind: LlamaStackDistribution
 metadata:
@@ -33,21 +28,14 @@ spec:
       name: starter
     containerSpec:
       env:
-      - name: VLLM_URL 
-        value: "{{litemaas_url}}"
+      - name: VLLM_URL
+        value: "{{maas_api_url}}"
       - name: VLLM_API_TOKEN
-        value: "{{api_token}}"
+        value: "{{maas_api_token}}"
     storage:
       size: "20Gi"
       mountPath: "/home/lls/.lls"
-----
-
-Apply the manifest
-
-[.console-input]
-[source,bash,role="copypaste",subs=attributes+]
-----
-oc apply -f llama-stack-scripts/llamastack-distribution-vllm.yaml
+EOF
 ----
 
 [.console-output]
