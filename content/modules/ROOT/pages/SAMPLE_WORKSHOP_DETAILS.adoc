@@ -1,0 +1,33 @@
+// NOTE this is a sample description of this workshop intended to be used to ingest into the showroom-assistant RAG system to provide attendees with workshop-specific guidance as part of the AI assistant.
+
+= Catalog Description: Explore Red Hat OpenShift Virtualization for VM Management, Migration, Storage, Backup/Recovery, and Networking. Modernize VM workflows!
+
+[.lead]
+Explore Red Hat OpenShift Virtualization for VM Management, Migration, Storage, Backup/Recovery, and Networking. Modernize VM workflows!
+
+== Content Type
+
+lab
+
+== Red Hat Products Covered
+
+* Red Hat OpenShift
+* Red Hat OpenShift Virtualization
+* Red Hat OpenShift Data Foundation
+* Migration Toolkit for Virtualization
+
+== Intended Audience
+
+* Virtual Machine Administrators responsible for the day-to-day management of virtual guests, including provisioning and resource management.
+* Virtual Infrastructure Administrators responsible for the physical infrastructure hosting the OpenShift Virtualization solution, including hardware, storage, and networking.
+* Cloud Administrators looking to integrate virtual machines into a Kubernetes-based infrastructure and manage them using Kubernetes-native tools.
+* DevOps Engineers seeking to modernize existing applications by combining virtual machines, containers, and serverless functions in a unified environment.
+
+== Lab Highlights
+
+* Create and manage virtual machines within the OpenShift Virtualization environment using templates and the virtualization perspective.
+* Migrate existing virtual machines from VMware vSphere to OpenShift Virtualization using the Migration Toolkit for Virtualization (MTV).
+* Manage storage for virtual machines, including examining persistent volume claims (PVCs), creating snapshots, and cloning VMs.
+* Implement backup and recovery strategies for virtual machines using OpenShift APIs for Data Protection (OADP).
+* Expose applications running on virtual machines using OpenShift services and routes for external access.
+* Connect virtual machines directly to physical networks using network attachment definitions (NADs) and user defined networks (UDNs).

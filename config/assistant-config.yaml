@@ -1,0 +1,113 @@
+# Workshop AI Assistant Configuration
+# This file allows workshop authors to customize the AI assistant behavior
+
+# MCP (Model Context Protocol) Configuration
+# Configuration for remote MCP servers available to the AI assistant
+mcp:
+  servers:
+    # Kubernetes MCP Server - provides kubectl/oc commands
+    kubernetes:
+      # Remote MCP server URL (localhost since it's a sidecar container)
+      url: "http://localhost:3000/mcp"
+
+    # Example: Add more MCP servers here in the future
+    # another-server:
+    #   url: "http://another-server:4000/mcp"
+
+# LLM and Embedding Configuration
+llm:
+  # LlamaStack will use this model for generating responses
+  model: "openai/gpt-4o"
+
+  # Embedding model for RAG vector store
+  embedding_model: "openai/text-embedding-3-small"
+
+# Agent Configurations
+# Define different specialized agents with their system prompts and available toolgroups
+agents:
+  lab_content:
+    name: "Lab Content Assistant"
+    description: "Specialized in workshop content, lab instructions, and learning materials"
+
+    # System prompt for this agent
+    system_prompt: |
+      You are a helpful AI assistant specialized in answering questions about lab content and learning materials.
+
+      Your expertise includes:
+      - Explaining lab concepts and procedures
+      - Helping users navigate workshop materials
+      - Providing step-by-step guidance
+      - Answering questions about documentation
+
+      Guidelines:
+      - ALWAYS use the knowledge_search tool to find relevant information from the workshop documentation before answering
+      - Be clear, concise, and educational
+      - Reference specific lab materials when relevant
+      - Provide examples and explanations from the documentation
+      - Help users understand concepts deeply
+      - When you reference lab materials, provide specific page or section references
+
+      IMPORTANT: Use the knowledge_search tool for every question to ensure your answers are grounded in the actual workshop content.
+
+    # Which toolgroups this agent should have access to
+    # "rag" is a special keyword for the RAG knowledge_search tool
+    # MCP toolgroups are prefixed with "mcp::" (e.g., "mcp::kubernetes")
+    toolgroups:
+      - "rag"
+      # Note: MCP tools disabled for this agent to keep it focused on content
+
+    # Keywords used to select this agent when in auto mode
+    keywords:
+      - "how"
+      - "what"
+      - "explain"
+      - "learn"
+      - "understand"
+      - "tutorial"
+      - "lab"
+      - "module"
+
+  openshift_debugging:
+    name: "OpenShift Debugging Assistant"
+    description: "Expert in troubleshooting OpenShift deployments and analyzing cluster state"
+
+    # System prompt for this agent
+    system_prompt: |
+      You are an expert OpenShift troubleshooting assistant.
+
+      Your expertise includes:
+      - Analyzing OpenShift logs and events
+      - Debugging deployment issues
+      - Understanding pod failures and container crashes
+      - Troubleshooting networking and storage
+      - Identifying configuration problems
+      - Using kubectl/oc commands effectively
+
+      Guidelines:
+      - Use the knowledge_search tool to find relevant troubleshooting documentation before answering
+      - Use available MCP tools to investigate the actual cluster state when needed
+      - Provide specific, actionable debugging steps
+      - Reference relevant OpenShift documentation from the knowledge base
+      - Explain what logs and errors mean
+      - Suggest concrete solutions based on documentation
+
+      When debugging, be systematic and thorough. Start by searching the documentation, then use MCP tools to investigate the actual cluster state.
+
+    # Which toolgroups this agent should have access to
+    toolgroups:
+      - "rag"
+      - "mcp::kubernetes"  # Give this agent access to Kubernetes tools
+
+    # Keywords used to select this agent when in auto mode
+    keywords:
+      - "error"
+      - "fail"
+      - "crash"
+      - "debug"
+      - "log"
+      - "pod"
+      - "deployment"
+      - "service"
+      - "route"
+      - "openshift"
+      - "kubernetes"

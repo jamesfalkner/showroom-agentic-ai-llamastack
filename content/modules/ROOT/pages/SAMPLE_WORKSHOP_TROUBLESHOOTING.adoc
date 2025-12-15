@@ -1,0 +1,14 @@
+// NOTE this is a sample set of troubleshooting/gotchas for this workshop, intended to be used to ingest into the showroom-assistant RAG system to provide attendees with workshop-specific guidance as part of the AI assistant.
+
+= Migration plan issues
+
+== Issue: When I created a Migration Plan (Plans for Virtualization), it threw this error: "The plan is not ready - VDDKInvalid VDDK init image is invalid. To troubleshoot, check the Forklift controller pod logs."
+
+I checked the Forklift controller pod logs but not sure what I am supposed to look for.
+
+I scaled the pod to zero on Forklift controller Deployment and re-scaled it back to recreate the pod but it did not resolve the issue.
+
+=== Solution
+
+This is perhaps a problem only on the Partner portal.
+

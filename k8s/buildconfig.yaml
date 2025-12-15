@@ -1,0 +1,32 @@
+---
+apiVersion: image.openshift.io/v1
+kind: ImageStream
+metadata:
+  name: showroom-ai-assistant
+  labels:
+    app: showroom-ai-assistant
+spec:
+  lookupPolicy:
+    local: false
+
+---
+apiVersion: build.openshift.io/v1
+kind: BuildConfig
+metadata:
+  name: showroom-ai-assistant-backend
+  labels:
+    app: showroom-ai-assistant
+spec:
+  output:
+    to:
+      kind: ImageStreamTag
+      name: showroom-ai-assistant:latest
+  source:
+    type: Binary
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: Dockerfile.backend
+  triggers:
+    - type: ConfigChange
+    - type: ImageChange

@@ -1,0 +1,114 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: showroom-ai-assistant
+  labels:
+    app: showroom-ai-assistant
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: showroom-ai-assistant
+  template:
+    metadata:
+      labels:
+        app: showroom-ai-assistant
+    spec:
+      serviceAccountName: showroom-ai-assistant
+      containers:
+      # Backend API Container
+      - name: backend
+        image: image-registry.openshift-image-registry.svc:5000/NAMESPACE_PLACEHOLDER/showroom-ai-assistant:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8080
+          name: http
+          protocol: TCP
+        env:
+        - name: PORT
+          value: "8080"
+        - name: ASSISTANT_CONFIG_PATH
+          value: "/app/config/assistant-config.yaml"
+        - name: CONTENT_DIR
+          value: "/app/content"
+        - name: PDF_DIR
+          value: "/app/content/modules/ROOT/assets/techdocs"
+        volumeMounts:
+        - name: config
+          mountPath: /app/config/assistant-config.yaml
+          subPath: assistant-config.yaml
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+
+      # MCP Kubernetes Server Container
+      - name: mcp-server
+        image: docker.io/node:20
+        command:
+        - sh
+        - -c
+        - npx -y kubernetes-mcp-server@latest --port 3000
+        ports:
+        - containerPort: 3000
+          name: mcp
+          protocol: TCP
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "100m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+        env:
+          - name: HOME
+            value: /tmp
+          - name: NPM_CONFIG_CACHE
+            value: /tmp/.npm
+
+      # LlamaStack Container
+      - name: llamastack
+        image: docker.io/llamastack/distribution-starter:0.3.2
+        ports:
+        - containerPort: 8321
+          name: llama
+          protocol: TCP
+        envFrom:
+        - secretRef:
+            name: showroom-ai-assistant-secrets
+        volumeMounts:
+        - name: llamastack-data
+          mountPath: /.llama
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+
+      volumes:
+      - name: llamastack-data
+        persistentVolumeClaim:
+          claimName: showroom-ai-assistant-llamastack
+      - name: config
+        configMap:
+          name: showroom-ai-assistant-config
