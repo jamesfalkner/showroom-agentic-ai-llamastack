@@ -84,10 +84,13 @@
   console.log('Toggle button:', toggle);
   console.log('Assistant window:', chatbotWindow);
 
-  let isOpen = false;
+  // Persist open/closed state in localStorage
+  const STORAGE_KEY_IS_OPEN = 'ai-assistant-is-open';
+  let isOpen = localStorage.getItem(STORAGE_KEY_IS_OPEN) === 'true';
 
   function closeWindow() {
     isOpen = false;
+    localStorage.setItem(STORAGE_KEY_IS_OPEN, 'false');
     chatbotWindow.style.display = 'none';
     if (label) {
       label.textContent = 'AI Assistant';
@@ -97,6 +100,7 @@
 
   function openWindow() {
     isOpen = true;
+    localStorage.setItem(STORAGE_KEY_IS_OPEN, 'true');
     chatbotWindow.style.display = 'flex';
     if (label) {
       label.textContent = 'Close';
@@ -105,6 +109,11 @@
   }
 
   if (toggle && chatbotWindow) {
+    // Restore previous state on page load
+    if (isOpen) {
+      openWindow();
+    }
+
     toggle.addEventListener('click', function(e) {
       e.preventDefault();
       e.stopPropagation();

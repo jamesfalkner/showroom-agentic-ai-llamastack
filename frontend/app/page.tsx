@@ -65,21 +65,59 @@ function sourceToUrl(source: Source): string {
   return url
 }
 
+const STORAGE_KEY_MESSAGES = 'ai-assistant-messages'
+const STORAGE_KEY_SELECTED_AGENT = 'ai-assistant-selected-agent'
+
 export default function ChatPage() {
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
+  // Initialize messages from localStorage or default welcome message
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (typeof window === 'undefined') return []
+
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY_MESSAGES)
+      if (stored) {
+        const parsed = JSON.parse(stored)
+        // Convert timestamp strings back to Date objects
+        return parsed.map((msg: any) => ({
+          ...msg,
+          timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
+        }))
+      }
+    } catch (error) {
+      console.error('Failed to load messages from localStorage:', error)
+    }
+
+    // Default welcome message
+    return [{
       id: nanoid(),
       content: "Hello! I'm your workshop AI assistant. I can help you with questions about the workshop content, troubleshooting, and guidance. What would you like to know?",
       role: 'assistant',
       timestamp: new Date()
-    }
-  ])
+    }]
+  })
 
   const [inputValue, setInputValue] = useState('')
   const [agents, setAgents] = useState<Agent[]>([])
-  const [selectedAgent, setSelectedAgent] = useState('auto')
+  const [selectedAgent, setSelectedAgent] = useState(() => {
+    if (typeof window === 'undefined') return 'auto'
+    return localStorage.getItem(STORAGE_KEY_SELECTED_AGENT) || 'auto'
+  })
   const [isStreaming, setIsStreaming] = useState(false)
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null)
+
+  // Save messages to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY_MESSAGES, JSON.stringify(messages))
+    }
+  }, [messages])
+
+  // Save selected agent to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(STORAGE_KEY_SELECTED_AGENT, selectedAgent)
+    }
+  }, [selectedAgent])
 
   // Dynamically construct backend URL based on current hostname
   // Pattern: <service>-<namespace>.<subdomain> -> showroom-ai-assistant-<namespace>.<subdomain>
@@ -288,17 +326,23 @@ export default function ChatPage() {
   )
 
   const handleReset = useCallback(() => {
-    setMessages([
+    const newMessages = [
       {
         id: nanoid(),
         content: "Hello! I'm your workshop AI assistant. I can help you with questions about the workshop content, troubleshooting, and guidance. What would you like to know?",
         role: 'assistant',
         timestamp: new Date()
       }
-    ])
+    ]
+    setMessages(newMessages)
     setInputValue('')
     setIsStreaming(false)
     setStreamingMessageId(null)
+
+    // Clear localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY_MESSAGES)
+    }
   }, [])
 
   // Find selected agent name for display
