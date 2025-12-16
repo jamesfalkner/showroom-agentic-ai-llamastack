@@ -98,6 +98,7 @@ export default function ChatPage() {
 
   const [inputValue, setInputValue] = useState('')
   const [agents, setAgents] = useState<Agent[]>([])
+  const [exampleQuestions, setExampleQuestions] = useState<string[]>([])
   const [selectedAgent, setSelectedAgent] = useState(() => {
     if (typeof window === 'undefined') return 'auto'
     return localStorage.getItem(STORAGE_KEY_SELECTED_AGENT) || 'auto'
@@ -158,6 +159,16 @@ export default function ChatPage() {
         setAgents(data.agents || [])
       })
       .catch(err => console.error('Failed to fetch agents:', err))
+  }, [backendUrl])
+
+  // Fetch configuration (example questions) on mount
+  useEffect(() => {
+    fetch(`${backendUrl}/api/config`)
+      .then(res => res.json())
+      .then(data => {
+        setExampleQuestions(data.example_questions || [])
+      })
+      .catch(err => console.error('Failed to fetch config:', err))
   }, [backendUrl])
 
   const handleSubmit: FormEventHandler<HTMLFormElement> = useCallback(
@@ -345,6 +356,17 @@ export default function ChatPage() {
     }
   }, [])
 
+  const handleExampleQuestionClick = useCallback((question: string) => {
+    if (isStreaming) return
+    setInputValue(question)
+    // Trigger the form submission programmatically by creating a synthetic event
+    const form = document.querySelector('form')
+    if (form) {
+      const event = new Event('submit', { bubbles: true, cancelable: true })
+      form.dispatchEvent(event)
+    }
+  }, [isStreaming])
+
   // Find selected agent name for display
   const selectedAgentName = selectedAgent === 'auto'
     ? 'Auto-select'
@@ -378,6 +400,23 @@ export default function ChatPage() {
       {/* Conversation Area */}
       <Conversation className="flex-1 min-h-0">
         <ConversationContent className="space-y-4">
+          {/* Show example questions only when there's just the welcome message */}
+          {messages.length === 1 && exampleQuestions.length > 0 && (
+            <div className="flex flex-col gap-2 px-4">
+              <p className="text-xs text-muted-foreground">Try asking:</p>
+              {exampleQuestions.map((question, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => handleExampleQuestionClick(question)}
+                  disabled={isStreaming}
+                  className="text-left text-sm px-4 py-3 rounded-lg border border-border bg-muted/50 hover:bg-muted transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+          )}
+
           {messages.map((message) => (
             <div key={message.id} className="space-y-3">
               <Message from={message.role}>

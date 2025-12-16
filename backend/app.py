@@ -640,6 +640,19 @@ async def get_agents():
     }
 
 
+@app.get("/api/config")
+async def get_config():
+    """Get frontend configuration including example questions"""
+    example_questions = config._get_config_value("workshop.example_questions", [
+        "What is this workshop about?",
+        "Help me understand more about Red Hat"
+    ])
+
+    return {
+        "example_questions": example_questions
+    }
+
+
 @app.get("/api/mcp/tools")
 async def get_mcp_tools():
     """Get available MCP tools"""

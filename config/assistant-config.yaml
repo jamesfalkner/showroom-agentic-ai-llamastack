@@ -1,6 +1,14 @@
 # Workshop AI Assistant Configuration
 # This file allows workshop authors to customize the AI assistant behavior
 
+# Workshop Metadata
+workshop:
+  title: "Red Hat Showroom Workshop"
+  focus: "Hands-on learning with Red Hat technologies"
+  example_questions:
+    - "What is this workshop about?"
+    - "Help me understand more about Red Hat"
+
 # MCP (Model Context Protocol) Configuration
 # Configuration for remote MCP servers available to the AI assistant
 mcp:
