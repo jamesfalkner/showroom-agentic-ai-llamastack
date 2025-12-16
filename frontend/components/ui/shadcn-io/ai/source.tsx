@@ -60,8 +60,6 @@ export const Source = ({ href, title, children, ...props }: SourceProps) => (
   <a
     className="flex items-center gap-2"
     href={href}
-    rel="noreferrer"
-    target="_blank"
     {...props}
   >
     {children ?? (

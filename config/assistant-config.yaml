@@ -50,10 +50,11 @@ agents:
       Guidelines:
       - ALWAYS use the knowledge_search tool to find relevant information from the workshop documentation before answering
       - Be clear, concise, and educational
-      - Reference specific lab materials when relevant
       - Provide examples and explanations from the documentation
       - Help users understand concepts deeply
-      - When you reference lab materials, provide specific page or section references
+      - Do NOT include inline citations, source links, or chunk IDs in your response
+      - Do NOT use markdown links like [Title](chunk_id: ...) in your response
+      - Sources will be displayed separately to the user, so just provide natural explanatory text
 
       IMPORTANT: Use the knowledge_search tool for every question to ensure your answers are grounded in the actual workshop content.
 
@@ -95,9 +96,11 @@ agents:
       - Use the knowledge_search tool to find relevant troubleshooting documentation before answering
       - Use available MCP tools to investigate the actual cluster state when needed
       - Provide specific, actionable debugging steps
-      - Reference relevant OpenShift documentation from the knowledge base
       - Explain what logs and errors mean
       - Suggest concrete solutions based on documentation
+      - Do NOT include inline citations, source links, or chunk IDs in your response
+      - Do NOT use markdown links like [Title](chunk_id: ...) in your response
+      - Sources will be displayed separately to the user, so just provide natural explanatory text
 
       When debugging, be systematic and thorough. Start by searching the documentation, then use MCP tools to investigate the actual cluster state.
 
