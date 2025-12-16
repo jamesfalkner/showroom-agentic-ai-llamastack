@@ -3,11 +3,12 @@
 
 # Workshop Metadata
 workshop:
-  title: "Red Hat Showroom Workshop"
+  title: "How do MCP servers extend agent tool capabilities?"
   focus: "Hands-on learning with Red Hat technologies"
   example_questions:
     - "What is this workshop about?"
-    - "Help me understand more about Red Hat"
+    - "What's the difference between LlamaStack Client and LangGraph?"
+    - "What Red Hat Products are featured in this workshop?"
 
 # MCP (Model Context Protocol) Configuration
 # Configuration for remote MCP servers available to the AI assistant
@@ -64,7 +65,7 @@ agents:
     toolgroups:
       - "rag"
       - "builtin::websearch"
-      
+
       # Note: MCP tools disabled for this agent to keep it focused on content
 
     # Keywords used to select this agent when in auto mode

@@ -1,0 +1,9 @@
+// NOTE this is a sample set of troubleshooting/gotchas for this workshop, intended to be used to ingest into the showroom-assistant RAG system to provide attendees with workshop-specific guidance as part of the AI assistant.
+
+= LlamaStackDistribution error
+
+== Issue: I just tried to create a LlamaStackDistribution and it failed with error: resource mapping not found for name: "llamastack-distribution-vllm" namespace: "" from "STDIN": no matches for kind "LlamaStackDistribution" in version "llamastack.io/v1alpha1" ensure CRDs are installed first
+
+=== Solution
+
+Make sure the LlamaStack Operator is installed by visiting "Ecosystem" and installing the Operator as the admin user.
