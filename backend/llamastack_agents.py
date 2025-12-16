@@ -229,6 +229,10 @@ def format_agent_event_for_sse(chunk) -> Optional[str]:
                                                 title = header_match.group(2).strip()
                                                 file_path = header_match.group(3).strip()
 
+                                                  # Strip "ROOT - " prefix if present
+                                                if title.startswith("ROOT - "):
+                                                    title = title[7:]  # Remove "ROOT - "
+
                                                 # Create unique key to avoid duplicates
                                                 source_key = f"{title}|{file_path}"
                                                 if source_key not in sources_seen:
