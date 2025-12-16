@@ -3,8 +3,6 @@
 = Lab: Agentic AI with Llama Stack and 3rd party Frameworks
 
 [.lead]
-Explore Red Hat OpenShift Virtualization for VM Management, Migration, Storage, Backup/Recovery, and Networking. Modernize VM workflows!
-
 This hands-on workshop explores building production-ready agentic AI applications using LlamaStack on Red Hat OpenShift. Participants will deploy and configure a complete AI agent stack, integrate external data sources through the Model Context Protocol (MCP), and build intelligent agents that can interact with customer and financial systems in real-time.
 
 == Red Hat Products Covered

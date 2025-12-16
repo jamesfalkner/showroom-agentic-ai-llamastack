@@ -54,7 +54,7 @@ echo -e "${GREEN}✓ Secret created${NC}"
 echo ""
 
 # 2. Update secret with value from .env.yaml
-echo -e "${YELLOW}2. Updating secret with API key from .env.yaml...${NC}"
+echo -e "${YELLOW}2. Updating secret with API keys from .env.yaml...${NC}"
 if [ ! -f "$PROJECT_ROOT/.env.yaml" ]; then
     echo -e "${RED}Error: .env.yaml not found. Please create it from .env.yaml.example${NC}"
     exit 1
@@ -66,9 +66,20 @@ if [ -z "$OPENAI_API_KEY" ]; then
     exit 1
 fi
 
+TAVILY_API_KEY=$(grep "tavily_api_key:" "$PROJECT_ROOT/.env.yaml" | cut -d'"' -f2)
+if [ -z "$TAVILY_API_KEY" ]; then
+    echo -e "${RED}Error: Could not extract tavily_api_key from .env.yaml${NC}"
+    exit 1
+fi
+
 oc patch secret showroom-ai-assistant-secrets -n "$NAMESPACE" \
     -p "{\"stringData\":{\"OPENAI_API_KEY\":\"$OPENAI_API_KEY\"}}"
 echo -e "${GREEN}✓ Secret updated with API key${NC}"
+echo ""
+
+oc patch secret showroom-ai-assistant-secrets -n "$NAMESPACE" \
+    -p "{\"stringData\":{\"TAVILY_SEARCH_API_KEY\":\"$TAVILY_API_KEY\"}}"
+echo -e "${GREEN}✓ Tavily Secret updated with API key${NC}"
 echo ""
 
 # 3. Create ConfigMap from assistant-config.yaml
