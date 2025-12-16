@@ -326,11 +326,11 @@ export default function ChatPage() {
   )
 
   const handleReset = useCallback(() => {
-    const newMessages = [
+    const newMessages: ChatMessage[] = [
       {
         id: nanoid(),
         content: "Hello! I'm your workshop AI assistant. I can help you with questions about the workshop content, troubleshooting, and guidance. What would you like to know?",
-        role: 'assistant',
+        role: 'assistant' as const,
         timestamp: new Date()
       }
     ]
