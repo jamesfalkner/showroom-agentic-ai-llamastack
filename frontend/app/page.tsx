@@ -171,22 +171,20 @@ export default function ChatPage() {
       .catch(err => console.error('Failed to fetch config:', err))
   }, [backendUrl])
 
-  const handleSubmit: FormEventHandler<HTMLFormElement> = useCallback(
-    async (event) => {
-      event.preventDefault()
-
-      if (!inputValue.trim() || isStreaming) return
+  // Extracted chat submission logic
+  const submitMessage = useCallback(
+    async (messageText: string) => {
+      if (!messageText.trim() || isStreaming) return
 
       // Add user message
       const userMessage: ChatMessage = {
         id: nanoid(),
-        content: inputValue.trim(),
+        content: messageText.trim(),
         role: 'user',
         timestamp: new Date()
       }
 
       setMessages(prev => [...prev, userMessage])
-      setInputValue('')
       setIsStreaming(true)
 
       // Create empty assistant message for streaming
@@ -333,7 +331,16 @@ export default function ChatPage() {
         setStreamingMessageId(null)
       }
     },
-    [inputValue, isStreaming, messages, selectedAgent, backendUrl]
+    [isStreaming, messages, selectedAgent, backendUrl]
+  )
+
+  const handleSubmit: FormEventHandler<HTMLFormElement> = useCallback(
+    async (event) => {
+      event.preventDefault()
+      await submitMessage(inputValue)
+      setInputValue('')
+    },
+    [inputValue, submitMessage]
   )
 
   const handleReset = useCallback(() => {
@@ -358,14 +365,8 @@ export default function ChatPage() {
 
   const handleExampleQuestionClick = useCallback((question: string) => {
     if (isStreaming) return
-    setInputValue(question)
-    // Trigger the form submission programmatically by creating a synthetic event
-    const form = document.querySelector('form')
-    if (form) {
-      const event = new Event('submit', { bubbles: true, cancelable: true })
-      form.dispatchEvent(event)
-    }
-  }, [isStreaming])
+    submitMessage(question)
+  }, [isStreaming, submitMessage])
 
   // Find selected agent name for display
   const selectedAgentName = selectedAgent === 'auto'
