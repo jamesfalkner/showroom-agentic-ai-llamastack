@@ -84,10 +84,10 @@ Files: 1
 --------------------------------------------------------------------------------
 ----
 
-Then is simply a matter of using Llama Stack client Agent API and file_search tool
+Llama Stack client Agent API and file_search tool
 
 [.console-output]
-[source,bash,subs=attributes+]
+[source,python,subs=attributes+]
 ----
 agent = Agent(
     client,
