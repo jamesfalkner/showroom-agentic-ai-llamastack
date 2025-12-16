@@ -63,6 +63,8 @@ agents:
     # MCP toolgroups are prefixed with "mcp::" (e.g., "mcp::kubernetes")
     toolgroups:
       - "rag"
+      - "builtin::websearch"
+      
       # Note: MCP tools disabled for this agent to keep it focused on content
 
     # Keywords used to select this agent when in auto mode

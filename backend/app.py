@@ -431,6 +431,9 @@ class MultiAgentSystem:
                         # MCP toolgroups are referenced by string name only (not dict)
                         tool_groups.append(toolgroup)
                         logger.info(f"Including MCP toolgroup: {toolgroup}")
+                else:
+                    logger.info(f"Including custom toolgroup: {toolgroup}")
+                    tool_groups.append(toolgroup)
 
             logger.info(f"Agent '{agent_type}' configured with toolgroups: {tool_groups}")
 
