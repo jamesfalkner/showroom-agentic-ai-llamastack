@@ -81,7 +81,36 @@ export default function ChatPage() {
   const [isStreaming, setIsStreaming] = useState(false)
   const [streamingMessageId, setStreamingMessageId] = useState<string | null>(null)
 
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:8000'
+  // Dynamically construct backend URL based on current hostname
+  // Pattern: <service>-<namespace>.<subdomain> -> showroom-ai-assistant-<namespace>.<subdomain>
+  const getBackendUrl = () => {
+    if (typeof window === 'undefined') {
+      return 'http://localhost:8000' // SSR fallback
+    }
+
+    const hostname = window.location.hostname
+
+    // For localhost development
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:8000'
+    }
+
+    // For OpenShift/Kubernetes deployment
+    // Replace service name with 'showroom-ai-assistant' keeping namespace and subdomain
+    // Pattern: <service>-<namespace>.<subdomain> -> showroom-ai-assistant-<namespace>.<subdomain>
+    const parts = hostname.split('-')
+    if (parts.length >= 2) {
+      // Replace first part (service name) with 'showroom-ai-assistant'
+      parts[0] = 'showroom-ai-assistant'
+      const backendHostname = parts.join('-')
+      return `${window.location.protocol}//${backendHostname}`
+    }
+
+    // Fallback
+    return 'http://localhost:8000'
+  }
+
+  const backendUrl = getBackendUrl()
 
   // Fetch available agents on mount
   useEffect(() => {
