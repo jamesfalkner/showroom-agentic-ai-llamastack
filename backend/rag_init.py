@@ -165,7 +165,7 @@ def _load_asciidoc_content(content_path: Path, min_chunk_size: int) -> List[dict
                             documents.append({
                                 'title': metadata.get('title', exported_file.stem),
                                 'content': cleaned_content,
-                                'file_path': metadata.get('originalPath', str(exported_file)),
+                                'file_path': metadata.get('url', metadata.get('originalPath', str(exported_file))),
                                 'module': f"{metadata.get('component', 'modules')} - {metadata.get('module', 'ROOT')}"
                             })
                 else:
@@ -222,10 +222,13 @@ def _load_pdf_content(pdf_path: Path, min_chunk_size: int) -> List[dict]:
 
             if len(text.strip()) > min_chunk_size:
                 title = pdf_file.stem.replace('_', ' ').replace('-', ' ').title()
+                # Convert filesystem path to Antora URL path
+                # /app/content/modules/ROOT/assets/techdocs/file.pdf -> /_/techdocs/file.pdf
+                pdf_url = f"/_/techdocs/{pdf_file.name}"
                 documents.append({
                     'title': title,
                     'content': text,
-                    'file_path': str(pdf_file),
+                    'file_path': pdf_url,
                     'module': 'PDF Documentation'
                 })
         except Exception as e:

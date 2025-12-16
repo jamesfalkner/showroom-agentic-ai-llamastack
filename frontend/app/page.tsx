@@ -51,17 +51,23 @@ type Agent = {
 function sourceToUrl(source: Source): string {
   const { url, content_type } = source
 
-  if (content_type === 'pdf-documentation') {
-    // PDF files - open in new tab
-    return url
+  // Both PDFs and workshop pages need to point to the showroom (not AI assistant)
+  // Pattern: showroom-ai-assistant-<namespace>.<subdomain> -> showroom-<namespace>.<subdomain>
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname
+
+    // For localhost, just use relative URL
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return url
+    }
+
+    // For OpenShift/production: replace 'showroom-ai-assistant' with 'showroom'
+    const showroomHostname = hostname.replace('showroom-ai-assistant-', 'showroom-')
+    const showroomUrl = `${window.location.protocol}//${showroomHostname}${url}`
+    return showroomUrl
   }
 
-  // Workshop pages - convert .adoc to .html
-  if (url.endsWith('.adoc')) {
-    const filename = url.split('/').pop()?.replace('.adoc', '.html') || ''
-    return `/modules/${filename}`
-  }
-
+  // Fallback for SSR
   return url
 }
 
