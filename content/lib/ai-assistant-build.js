@@ -7,6 +7,15 @@ const path = require('path')
 module.exports.register = function ({ config }) {
   const logger = this.getLogger('ai-assistant-build-extension')
 
+  // Set a flag that templates can check to show/hide the AI assistant widget
+  this.on('playbookBuilt', ({ playbook }) => {
+    if (!playbook.site.keys) {
+      playbook.site.keys = {}
+    }
+    playbook.site.keys.aiAssistantEnabled = true
+    logger.info('AI Assistant enabled flag set in site keys')
+  })
+
   this.on('sitePublished', ({ playbook }) => {
     logger.info('Starting AI frontend build process...')
 
