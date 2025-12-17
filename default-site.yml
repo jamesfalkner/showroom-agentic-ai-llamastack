@@ -21,10 +21,10 @@ antora:
     # enable the AI and RAG extensions with CLI
     # e.g. antora --extension ai-assistant-build --extension rag-export default-site.yml
     - id: ai-assistant-build
-      enabled: false
+      enabled: true
       require: ./content/lib/ai-assistant-build.js
     - id: rag-export
-      enabled: false
+      enabled: true
       require: ./content/lib/rag-export.js
       outputDir: ./rag-content
     # - require: '@sntke/antora-mermaid-extension'
