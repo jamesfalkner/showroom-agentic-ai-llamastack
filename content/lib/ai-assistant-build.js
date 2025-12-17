@@ -8,7 +8,7 @@ module.exports.register = function ({ config }) {
   const logger = this.getLogger('ai-assistant-build-extension')
 
   this.on('sitePublished', ({ playbook }) => {
-    console.log('Starting AI frontend build process...')
+    logger.info('Starting AI frontend build process...')
 
     const projectRoot = path.resolve(__dirname, '../..')
     const frontendDir = path.join(projectRoot, 'frontend')
@@ -18,12 +18,12 @@ module.exports.register = function ({ config }) {
     try {
       // Check if frontend directory exists
       if (!fs.existsSync(frontendDir)) {
-        console.log(`Frontend directory not found at ${frontendDir}, skipping frontend build`)
+        logger.info(`Frontend directory not found at ${frontendDir}, skipping frontend build`)
         return
       }
 
       // Clean previous Next.js builds
-      console.log('Cleaning previous builds...')
+      logger.info('Cleaning previous builds...')
       const nextDir = path.join(frontendDir, '.next')
       const outDir = path.join(frontendDir, 'out')
 
@@ -35,7 +35,7 @@ module.exports.register = function ({ config }) {
       }
 
       // Install dependencies
-      console.log('Installing frontend dependencies...')
+      logger.info('Installing frontend dependencies...')
       execSync('npm install', {
         cwd: frontendDir,
         stdio: 'inherit',
@@ -43,7 +43,7 @@ module.exports.register = function ({ config }) {
       })
 
       // Build the frontend
-      console.log('Building frontend with Next.js...')
+      logger.info('Building frontend with Next.js...')
       execSync('npm run build', {
         cwd: frontendDir,
         stdio: 'inherit',
@@ -51,7 +51,7 @@ module.exports.register = function ({ config }) {
       })
 
       // Copy built files to www/ai-assistant
-      console.log(`Copying frontend build to ${targetDir}...`)
+      logger.info(`Copying frontend build to ${targetDir}...`)
 
       // Remove existing target directory if it exists
       if (fs.existsSync(targetDir)) {
@@ -61,8 +61,8 @@ module.exports.register = function ({ config }) {
       // Copy the out directory to the target
       copyRecursiveSync(outDir, targetDir)
 
-      console.log('Frontend build completed successfully!')
-      console.log(`Frontend is available at ${targetDir}`)
+      logger.info('Frontend build completed successfully!')
+      logger.info(`Frontend is available at ${targetDir}`)
 
     } catch (error) {
       logger.error(`Frontend build failed: ${error.message}`)

@@ -81,7 +81,7 @@ if ! command -v npx &> /dev/null; then
     echo -e "${RED}Error: npx not found. Please install Node.js${NC}"
     exit 1
 fi
-npx antora default-site.yml
+npx antora --extension ai-assistant-build --extension rag-export default-site.yml
 echo -e "${GREEN}✓ Antora site built${NC}"
 echo -e "${GREEN}✓ RAG content exported${NC}"
 echo ""

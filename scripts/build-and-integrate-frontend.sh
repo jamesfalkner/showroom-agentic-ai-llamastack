@@ -12,7 +12,7 @@ cd "$PROJECT_ROOT"
 rm -rf www
 
 echo "Regenerating Antora documentation site..."
-npx antora default-site.yml
+npx antora --extension ai-assistant-build --extension rag-export default-site.yml
 
 # Note: chatbot.hbs partial already exists in content/supplemental-ui/partials/
 # and is checked into git. No need to generate it.

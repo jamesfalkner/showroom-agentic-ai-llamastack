@@ -18,10 +18,14 @@ antora:
   extensions:
     - require: ./content/lib/dev-mode.js
       enabled: true
-    - require: ./content/lib/ai-assistant-build.js
-      enabled: true
-    - require: ./content/lib/rag-export.js
-      enabled: true
+    # enable the AI and RAG extensions with CLI
+    # e.g. antora --extension ai-assistant-build --extension rag-export default-site.yml
+    - id: ai-assistant-build
+      enabled: false
+      require: ./content/lib/ai-assistant-build.js
+    - id: rag-export
+      enabled: false
+      require: ./content/lib/rag-export.js
       outputDir: ./rag-content
     # - require: '@sntke/antora-mermaid-extension'
     #   mermaid_library_url: "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs" # <2>

@@ -138,7 +138,7 @@ if ! command -v npx &> /dev/null; then
 fi
 
 # Build the site to generate rag-content
-npx antora default-site.yml
+npx antora --extension ai-assistant-build --extension rag-export default-site.yml
 echo -e "${GREEN}✓ RAG content built${NC}"
 echo ""
 
