@@ -12,7 +12,8 @@ on:
       - '.github/workflows/build-container.yml'
 
 env:
-  IMAGE_NAME: quay.io/jfalkner1/showroom-ai-assistant
+  REGISTRY: quay.io
+  IMAGE_NAME: jfalkner1/showroom-ai-assistant
 
 jobs:
   build-and-push:
@@ -46,7 +47,7 @@ jobs:
         with:
           image: ${{ steps.build-image.outputs.image }}
           tags: ${{ steps.build-image.outputs.tags }}
-          registry: quay.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ secrets.QUAY_USERNAME }}
           password: ${{ secrets.QUAY_PASSWORD }}
 
