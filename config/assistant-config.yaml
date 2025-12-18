@@ -25,11 +25,48 @@ mcp:
 
 # LLM and Embedding Configuration
 llm:
+  # LLM Engines: List of engines to enable (supports multiple providers simultaneously)
+  # Supported engines: openai, vllm, ollama
+  # Example: ["vllm", "ollama"] enables both vLLM for inference and Ollama for embeddings
+  engines: ["vllm", "ollama"]
+
   # LlamaStack will use this model for generating responses
-  model: "openai/gpt-4o"
+  # The model name should match one of the enabled engines (e.g., "vllm/model-name")
+  model: "vllm/Qwen3-14B"
 
   # Embedding model for RAG vector store
-  embedding_model: "openai/text-embedding-3-small"
+  # Can use a different engine than the main model (e.g., "ollama/nomic-embed-text")
+  embedding_model: "ollama/nomic-embed-text:v1.5"
+
+  # HTTP timeout in seconds for LlamaStack client requests
+  # Increase this for slower models or when using local vLLM/Ollama
+  # Default: 120 seconds
+  timeout: 600
+
+  # OpenAI-specific configuration (only used when openai is in engines list)
+  openai:
+    # Optional: Custom endpoint URL (sets OPENAI_BASE_URL)
+    # endpoint: "https://api.openai.com/v1"
+
+  # vLLM-specific configuration (only used when vllm is in engines list)
+  vllm:
+    # Optional: Custom endpoint URL (sets VLLM_URL)
+    # For local vLLM running on host machine, use host.containers.internal
+    # Example: "http://host.containers.internal:8000/v1"
+    endpoint: "http://host.containers.internal:8000/v1"
+
+    # Maximum tokens for vLLM generation
+    max_tokens: 40960
+
+    # TLS certificate verification (true/false)
+    # tls_verify: true
+
+  # Ollama-specific configuration (only used when ollama is in engines list)
+  ollama:
+    # Optional: Custom endpoint URL (sets OLLAMA_URL)
+    # For local Ollama running on host machine, use host.containers.internal
+    # Example: "http://host.containers.internal:11434"
+    endpoint: "http://host.containers.internal:11434"
 
 # Agent Configurations
 # Define different specialized agents with their system prompts and available toolgroups

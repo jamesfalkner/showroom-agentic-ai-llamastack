@@ -6,6 +6,9 @@ WORKDIR /app
 # Copy backend files
 COPY backend/ /app/
 
+# Install Python dependencies
+RUN pip install --no-cache-dir -r requirements.txt
+
 # Copy configuration
 COPY config/ /app/config/
 
@@ -14,9 +17,6 @@ COPY rag-content/ /app/rag-content/
 
 # Copy techdocs PDFs (keep original structure for PDF_DIR)
 COPY content/modules/ROOT/assets/techdocs/ /app/content/modules/ROOT/assets/techdocs/
-
-# Install Python dependencies
-RUN pip install --no-cache-dir -r requirements.txt
 
 # Environment variables
 # Use RAG-optimized content with resolved AsciiDoc attributes

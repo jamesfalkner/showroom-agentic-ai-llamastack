@@ -15,6 +15,7 @@ LLAMASTACK_CONTAINER="showroom-llamastack"
 MCP_CONTAINER="showroom-mcp-server"
 FRONTEND_CONTAINER="showroom-frontend"
 BACKEND_IMAGE="showroom-ai-backend:local"
+BACKEND_PORT=8001
 FRONTEND_PORT=8080
 
 # Get the directory where the script is located
@@ -25,30 +26,101 @@ echo -e "${GREEN}Showroom AI Assistant - Local Podman Setup${NC}"
 echo "=============================================="
 echo ""
 
-# Check if OPENAI_API_KEY is set
-if [ -z "$OPENAI_API_KEY" ]; then
-    echo -e "${YELLOW}OPENAI_API_KEY not set in environment.${NC}"
-
-    # Try to load from .env.yaml
-    if [ -f "$PROJECT_ROOT/.env.yaml" ]; then
-        echo -e "${YELLOW}Loading API key from .env.yaml...${NC}"
-        OPENAI_API_KEY=$(grep "llm_api_key:" "$PROJECT_ROOT/.env.yaml" | cut -d'"' -f2 | tr -d "'")
-        if [ -z "$OPENAI_API_KEY" ]; then
-            echo -e "${RED}Error: Could not extract llm_api_key from .env.yaml${NC}"
-            echo "Please set OPENAI_API_KEY environment variable or update .env.yaml"
-            exit 1
-        fi
-        export OPENAI_API_KEY
-        echo -e "${GREEN}✓ API key loaded from .env.yaml${NC}"
-    else
-        echo -e "${RED}Error: No .env.yaml found and OPENAI_API_KEY not set${NC}"
-        echo ""
-        echo "Please either:"
-        echo "  1. Export OPENAI_API_KEY: export OPENAI_API_KEY='your-key-here'"
-        echo "  2. Create .env.yaml from .env.yaml.example with your API key"
-        exit 1
-    fi
+# Check if yq is installed
+if ! command -v yq &> /dev/null; then
+    echo -e "${RED}Error: yq is not installed${NC}"
+    echo ""
+    echo "yq is required for parsing YAML configuration files."
+    echo "Please install it from: https://github.com/mikefarah/yq"
+    echo ""
+    echo "Installation options:"
+    echo "  macOS:   brew install yq"
+    echo "  Linux:   Download from https://github.com/mikefarah/yq/releases"
+    exit 1
 fi
+
+# Read LLM engine configuration from assistant-config.yaml
+echo -e "${YELLOW}Reading LLM engine configuration...${NC}"
+
+# Support both old (single engine) and new (multiple engines) format
+LLM_ENGINES_RAW=$(yq eval '.llm.engines // []' "$PROJECT_ROOT/config/assistant-config.yaml")
+if [ "$LLM_ENGINES_RAW" = "[]" ] || [ -z "$LLM_ENGINES_RAW" ]; then
+    # Fallback to old single engine format
+    SINGLE_ENGINE=$(yq eval '.llm.engine // "openai"' "$PROJECT_ROOT/config/assistant-config.yaml")
+    LLM_ENGINES=("$SINGLE_ENGINE")
+    echo -e "${YELLOW}Using single engine format, defaulting to '$SINGLE_ENGINE'${NC}"
+else
+    # New format: read engines as array (portable method for bash 3.x compatibility)
+    LLM_ENGINES=()
+    while IFS= read -r engine; do
+        LLM_ENGINES+=("$engine")
+    done < <(yq eval '.llm.engines[]' "$PROJECT_ROOT/config/assistant-config.yaml")
+fi
+
+echo -e "${GREEN}✓ Enabled LLM Engines: ${LLM_ENGINES[*]}${NC}"
+
+# Read per-engine endpoint configuration
+OPENAI_ENDPOINT=$(yq eval '.llm.openai.endpoint // ""' "$PROJECT_ROOT/config/assistant-config.yaml")
+VLLM_ENDPOINT=$(yq eval '.llm.vllm.endpoint // ""' "$PROJECT_ROOT/config/assistant-config.yaml")
+OLLAMA_ENDPOINT=$(yq eval '.llm.ollama.endpoint // ""' "$PROJECT_ROOT/config/assistant-config.yaml")
+
+# Read vLLM-specific configuration
+VLLM_MAX_TOKENS=$(yq eval '.llm.vllm.max_tokens // ""' "$PROJECT_ROOT/config/assistant-config.yaml")
+VLLM_TLS_VERIFY=$(yq eval '.llm.vllm.tls_verify // ""' "$PROJECT_ROOT/config/assistant-config.yaml")
+
+# Load API keys for all enabled engines
+if [ ! -f "$PROJECT_ROOT/.env.yaml" ]; then
+    echo -e "${RED}Error: No .env.yaml found${NC}"
+    echo ""
+    echo "Please create .env.yaml from .env.yaml.example with your API keys"
+    exit 1
+fi
+
+# Process each enabled engine
+for ENGINE in "${LLM_ENGINES[@]}"; do
+    case "$ENGINE" in
+        "openai")
+            if [ -z "$OPENAI_API_KEY" ]; then
+                echo -e "${YELLOW}Loading OpenAI API key from .env.yaml...${NC}"
+                OPENAI_API_KEY=$(yq eval '.openai_api_key // ""' "$PROJECT_ROOT/.env.yaml")
+                if [ -z "$OPENAI_API_KEY" ]; then
+                    echo -e "${RED}Error: Could not extract openai_api_key from .env.yaml${NC}"
+                    echo "Please set OPENAI_API_KEY environment variable or update .env.yaml"
+                    exit 1
+                fi
+                export OPENAI_API_KEY
+                echo -e "${GREEN}✓ OpenAI API key loaded${NC}"
+            fi
+            ;;
+        "vllm")
+            if [ -z "$VLLM_API_TOKEN" ]; then
+                VLLM_API_TOKEN=$(yq eval '.vllm_api_token // ""' "$PROJECT_ROOT/.env.yaml")
+                if [ -n "$VLLM_API_TOKEN" ]; then
+                    export VLLM_API_TOKEN
+                    echo -e "${GREEN}✓ vLLM API token loaded from .env.yaml${NC}"
+                else
+                    echo -e "${YELLOW}ℹ vLLM API token not found in .env.yaml (optional for local vLLM)${NC}"
+                fi
+            fi
+            ;;
+        "ollama")
+            if [ -z "$OLLAMA_API_KEY" ]; then
+                OLLAMA_API_KEY=$(yq eval '.ollama_api_key // ""' "$PROJECT_ROOT/.env.yaml")
+                if [ -n "$OLLAMA_API_KEY" ]; then
+                    export OLLAMA_API_KEY
+                    echo -e "${GREEN}✓ Ollama API key loaded from .env.yaml${NC}"
+                else
+                    echo -e "${YELLOW}ℹ Ollama API key not found in .env.yaml (optional for local Ollama)${NC}"
+                fi
+            fi
+            ;;
+        *)
+            echo -e "${RED}Error: Unknown LLM engine '$ENGINE'${NC}"
+            echo "Supported engines: openai, vllm, ollama"
+            exit 1
+            ;;
+    esac
+done
 echo ""
 
 # Function to cleanup containers and network
@@ -94,12 +166,58 @@ echo ""
 
 # 4. Start LlamaStack container
 echo -e "${YELLOW}4. Starting LlamaStack container...${NC}"
-podman run -d \
+
+# Build environment variables for all enabled engines
+LLAMASTACK_ENV_VARS=""
+
+for ENGINE in "${LLM_ENGINES[@]}"; do
+    case "$ENGINE" in
+        "openai")
+            if [ -n "$OPENAI_API_KEY" ]; then
+                LLAMASTACK_ENV_VARS="$LLAMASTACK_ENV_VARS -e OPENAI_API_KEY=\"$OPENAI_API_KEY\""
+            fi
+            if [ -n "$OPENAI_ENDPOINT" ]; then
+                LLAMASTACK_ENV_VARS="$LLAMASTACK_ENV_VARS -e OPENAI_BASE_URL=\"$OPENAI_ENDPOINT\""
+                echo -e "${GREEN}✓ Setting OPENAI_BASE_URL to $OPENAI_ENDPOINT${NC}"
+            fi
+            ;;
+        "vllm")
+            if [ -n "$VLLM_API_TOKEN" ]; then
+                LLAMASTACK_ENV_VARS="$LLAMASTACK_ENV_VARS -e VLLM_API_TOKEN=\"$VLLM_API_TOKEN\""
+            fi
+            if [ -n "$VLLM_ENDPOINT" ]; then
+                LLAMASTACK_ENV_VARS="$LLAMASTACK_ENV_VARS -e VLLM_URL=\"$VLLM_ENDPOINT\""
+                echo -e "${GREEN}✓ Setting VLLM_URL to $VLLM_ENDPOINT${NC}"
+            fi
+            if [ -n "$VLLM_MAX_TOKENS" ]; then
+                LLAMASTACK_ENV_VARS="$LLAMASTACK_ENV_VARS -e VLLM_MAX_TOKENS=\"$VLLM_MAX_TOKENS\""
+                echo -e "${GREEN}✓ Setting VLLM_MAX_TOKENS to $VLLM_MAX_TOKENS${NC}"
+            fi
+            if [ -n "$VLLM_TLS_VERIFY" ]; then
+                LLAMASTACK_ENV_VARS="$LLAMASTACK_ENV_VARS -e VLLM_TLS_VERIFY=\"$VLLM_TLS_VERIFY\""
+                echo -e "${GREEN}✓ Setting VLLM_TLS_VERIFY to $VLLM_TLS_VERIFY${NC}"
+            fi
+            ;;
+        "ollama")
+            if [ -n "$OLLAMA_API_KEY" ]; then
+                LLAMASTACK_ENV_VARS="$LLAMASTACK_ENV_VARS -e OLLAMA_API_KEY=\"$OLLAMA_API_KEY\""
+            fi
+            if [ -n "$OLLAMA_ENDPOINT" ]; then
+                LLAMASTACK_ENV_VARS="$LLAMASTACK_ENV_VARS -e OLLAMA_URL=\"$OLLAMA_ENDPOINT\""
+                echo -e "${GREEN}✓ Setting OLLAMA_URL to $OLLAMA_ENDPOINT${NC}"
+            fi
+            ;;
+    esac
+done
+
+echo "Podman variables: $LLAMASTACK_ENV_VARS"
+
+eval "podman run -d \
     --name $LLAMASTACK_CONTAINER \
     --network $NETWORK_NAME \
-    -e OPENAI_API_KEY="$OPENAI_API_KEY" \
+    $LLAMASTACK_ENV_VARS \
     -v llamastack-data:/.llama:z \
-    docker.io/llamastack/distribution-starter:0.3.2
+    docker.io/llamastack/distribution-starter:0.3.5"
 echo -e "${GREEN}✓ LlamaStack container started${NC}"
 echo ""
 
@@ -155,18 +273,56 @@ echo ""
 
 # 6. Start Backend container
 echo -e "${YELLOW}6. Starting Backend API container...${NC}"
-podman run -d \
+
+# Build backend environment variables
+BACKEND_ENV_VARS="-e PORT=8080 -e LLAMA_STACK_URL=\"http://$LLAMASTACK_CONTAINER:8321\" \
+-e ASSISTANT_CONFIG_PATH=\"/app/config/assistant-config.yaml\" \
+-e CONTENT_DIR=\"/app/rag-content\" \
+-e PDF_DIR=\"/app/content/modules/ROOT/assets/techdocs\""
+
+# Add engine-specific environment variables for all enabled engines (same as LlamaStack for consistency)
+for ENGINE in "${LLM_ENGINES[@]}"; do
+    case "$ENGINE" in
+        "openai")
+            if [ -n "$OPENAI_API_KEY" ]; then
+                BACKEND_ENV_VARS="$BACKEND_ENV_VARS -e OPENAI_API_KEY=\"$OPENAI_API_KEY\""
+            fi
+            if [ -n "$OPENAI_ENDPOINT" ]; then
+                BACKEND_ENV_VARS="$BACKEND_ENV_VARS -e OPENAI_BASE_URL=\"$OPENAI_ENDPOINT\""
+            fi
+            ;;
+        "vllm")
+            if [ -n "$VLLM_API_TOKEN" ]; then
+                BACKEND_ENV_VARS="$BACKEND_ENV_VARS -e VLLM_API_TOKEN=\"$VLLM_API_TOKEN\""
+            fi
+            if [ -n "$VLLM_ENDPOINT" ]; then
+                BACKEND_ENV_VARS="$BACKEND_ENV_VARS -e VLLM_URL=\"$VLLM_ENDPOINT\""
+            fi
+            if [ -n "$VLLM_MAX_TOKENS" ]; then
+                BACKEND_ENV_VARS="$BACKEND_ENV_VARS -e VLLM_MAX_TOKENS=\"$VLLM_MAX_TOKENS\""
+            fi
+            if [ -n "$VLLM_TLS_VERIFY" ]; then
+                BACKEND_ENV_VARS="$BACKEND_ENV_VARS -e VLLM_TLS_VERIFY=\"$VLLM_TLS_VERIFY\""
+            fi
+            ;;
+        "ollama")
+            if [ -n "$OLLAMA_API_KEY" ]; then
+                BACKEND_ENV_VARS="$BACKEND_ENV_VARS -e OLLAMA_API_KEY=\"$OLLAMA_API_KEY\""
+            fi
+            if [ -n "$OLLAMA_ENDPOINT" ]; then
+                BACKEND_ENV_VARS="$BACKEND_ENV_VARS -e OLLAMA_URL=\"$OLLAMA_ENDPOINT\""
+            fi
+            ;;
+    esac
+done
+
+eval "podman run -d \
     --name $BACKEND_CONTAINER \
     --network $NETWORK_NAME \
-    -p 8000:8080 \
-    -e PORT=8080 \
-    -e OPENAI_API_KEY="$OPENAI_API_KEY" \
-    -e LLAMA_STACK_URL="http://$LLAMASTACK_CONTAINER:8321" \
-    -e ASSISTANT_CONFIG_PATH="/app/config/assistant-config.yaml" \
-    -e CONTENT_DIR="/app/rag-content" \
-    -e PDF_DIR="/app/content/modules/ROOT/assets/techdocs" \
-    $BACKEND_IMAGE
-echo -e "${GREEN}✓ Backend started on http://localhost:8000${NC}"
+    -p $BACKEND_PORT:8080 \
+    $BACKEND_ENV_VARS \
+    $BACKEND_IMAGE"
+echo -e "${GREEN}✓ Backend started on http://localhost:$BACKEND_PORT${NC}"
 echo ""
 
 # 7. Start Frontend HTTP server
@@ -203,7 +359,7 @@ else
 fi
 
 # Check Backend
-if curl -s http://localhost:8000/api/health > /dev/null 2>&1; then
+if curl -s http://localhost:$BACKEND_PORT/api/health > /dev/null 2>&1; then
     echo -e "${GREEN}✓ Backend API is healthy${NC}"
 else
     echo -e "${YELLOW}⚠ Backend API not ready yet (may take a few moments)${NC}"
@@ -222,8 +378,8 @@ echo -e "${GREEN}All services started!${NC}"
 echo ""
 echo -e "${BLUE}Access the application:${NC}"
 echo "  Showroom Frontend: http://localhost:$FRONTEND_PORT"
-echo "  Backend API:       http://localhost:8000"
-echo "  Health Check:      http://localhost:8000/api/health"
+echo "  Backend API:       http://localhost:$BACKEND_PORT"
+echo "  Health Check:      http://localhost:$BACKEND_PORT/api/health"
 echo ""
 echo -e "${BLUE}View logs:${NC}"
 echo "  Backend:     podman logs -f $BACKEND_CONTAINER"

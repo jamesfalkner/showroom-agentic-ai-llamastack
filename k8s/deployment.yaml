@@ -34,6 +34,11 @@ spec:
           value: "/app/rag-content"
         - name: PDF_DIR
           value: "/app/content/modules/ROOT/assets/techdocs"
+        - name: LLAMA_STACK_URL
+          value: "http://localhost:8321"
+        envFrom:
+        - secretRef:
+            name: showroom-ai-assistant-secrets
         volumeMounts:
         - name: config
           mountPath: /app/config/assistant-config.yaml

@@ -85,8 +85,45 @@ class Config:
         self.LLAMA_STACK_URL = os.getenv("LLAMA_STACK_URL", "http://localhost:8321")
 
         # LLM Configuration
+        # Support both old (single engine) and new (multiple engines) format
+        engines_config = self._get_config_value("llm.engines", None)
+        if engines_config:
+            # New format: list of engines
+            self.LLM_ENGINES = engines_config if isinstance(engines_config, list) else [engines_config]
+        else:
+            # Fallback to old format for backward compatibility
+            single_engine = self._get_config_value("llm.engine", "openai")
+            self.LLM_ENGINES = [single_engine]
+
         self.LLM_MODEL = self._get_config_value("llm.model", "openai/gpt-4o")
         self.EMBEDDING_MODEL = self._get_config_value("llm.embedding_model", "text-embedding-3-small")
+        self.LLM_TIMEOUT = self._get_config_value("llm.timeout", 120.0)
+
+        # Per-engine configuration
+        self.OPENAI_ENDPOINT = self._get_config_value("llm.openai.endpoint", None)
+
+        self.VLLM_ENDPOINT = self._get_config_value("llm.vllm.endpoint", None)
+        self.VLLM_MAX_TOKENS = self._get_config_value("llm.vllm.max_tokens", None)
+        self.VLLM_TLS_VERIFY = self._get_config_value("llm.vllm.tls_verify", None)
+
+        self.OLLAMA_ENDPOINT = self._get_config_value("llm.ollama.endpoint", None)
+
+        # Log LLM engine configuration
+        logger.info(f"LLM Engines: {', '.join(self.LLM_ENGINES)}")
+
+        if "openai" in self.LLM_ENGINES and self.OPENAI_ENDPOINT:
+            logger.info(f"OpenAI Endpoint: {self.OPENAI_ENDPOINT}")
+
+        if "vllm" in self.LLM_ENGINES:
+            if self.VLLM_ENDPOINT:
+                logger.info(f"vLLM Endpoint: {self.VLLM_ENDPOINT}")
+            if self.VLLM_MAX_TOKENS:
+                logger.info(f"vLLM Max Tokens: {self.VLLM_MAX_TOKENS}")
+            if self.VLLM_TLS_VERIFY is not None:
+                logger.info(f"vLLM TLS Verify: {self.VLLM_TLS_VERIFY}")
+
+        if "ollama" in self.LLM_ENGINES and self.OLLAMA_ENDPOINT:
+            logger.info(f"Ollama Endpoint: {self.OLLAMA_ENDPOINT}")
 
         # Content directories
         # Default to local paths for development (relative to backend directory)
@@ -247,8 +284,11 @@ class MultiAgentSystem:
 
     async def initialize(self):
         """Initialize LlamaStack client and configure tool groups"""
-        self.client = LlamaStackClient(base_url=self.llama_stack_url)
-        logger.info(f"LlamaStack client initialized at {self.llama_stack_url}")
+        self.client = LlamaStackClient(
+            base_url=self.llama_stack_url,
+            timeout=config.LLM_TIMEOUT
+        )
+        logger.info(f"LlamaStack client initialized at {self.llama_stack_url} with {config.LLM_TIMEOUT}s timeout")
 
         # Configure RAG tool group if vector store is available
         if self.vector_store_id:
@@ -520,7 +560,10 @@ async def lifespan(app):
     logger.info("Application starting up...")
 
     # Initialize LlamaStack client for vector store initialization
-    llama_client = LlamaStackClient(base_url=config.LLAMA_STACK_URL)
+    llama_client = LlamaStackClient(
+        base_url=config.LLAMA_STACK_URL,
+        timeout=config.LLM_TIMEOUT
+    )
 
     # Initialize vector store with workshop documents
     vector_store_id = await initialize_vector_store(

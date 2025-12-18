@@ -130,14 +130,14 @@ export default function ChatPage() {
   // Pattern: <service>-<namespace>.<subdomain> -> showroom-ai-assistant-<namespace>.<subdomain>
   const getBackendUrl = () => {
     if (typeof window === 'undefined') {
-      return 'http://localhost:8000' // SSR fallback
+      return 'http://localhost:8001' // SSR fallback
     }
 
     const hostname = window.location.hostname
 
     // For localhost development
     if (hostname === 'localhost' || hostname === '127.0.0.1') {
-      return 'http://localhost:8000'
+      return 'http://localhost:8001'
     }
 
     // For OpenShift/Kubernetes deployment
@@ -152,7 +152,7 @@ export default function ChatPage() {
     }
 
     // Fallback
-    return 'http://localhost:8000'
+    return 'http://localhost:8001'
   }
 
   const backendUrl = getBackendUrl()
