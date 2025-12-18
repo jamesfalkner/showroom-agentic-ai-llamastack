@@ -221,7 +221,7 @@ spec:
         - name: VLLM_MAX_TOKENS
           value: '4096'
         - name: VLLM_API_URL
-          value: '{litemaas-api-url}'
+          value: '{litellm_api_base_url}'
         - name: VLLM_API_TOKEN
           value: '{litellm_virtual_key}'
         - name: LLAMA_STACK_CONFIG_DIR
