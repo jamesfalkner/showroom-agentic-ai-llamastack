@@ -223,7 +223,7 @@ spec:
         - name: VLLM_API_URL
           value: '{litemaas-api-url}'
         - name: VLLM_API_TOKEN
-          value: '{litemaas-api-token}'
+          value: '{litellm_virtual_key}'
         - name: LLAMA_STACK_CONFIG_DIR
           value: /opt/app-root/src/.llama/distributions/rh/
       name: llama-stack
