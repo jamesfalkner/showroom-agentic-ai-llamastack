@@ -52,17 +52,62 @@ echo $CHAT_URL
 http://simple-agent-chat-ui-showroom-nn2ct-1-user1.apps.cluster-nn2ct.dynamic.redhatworkshops.io
 ----
 
+You can also view the whole architecture deployed in your namespace
+
+image::topology.png[]
+
+
 Now you can ask it agent questions such as 
 
 [.console-input]
-[source,bash,role="copypaste",subs=attributes+]
+[source,text,role="copypaste",subs=attributes+]
 ----
-What is the capital of France?
+What is the capital of Italy?
 ----
 
 image::chat_ui_1.png[]
 
-Or *who are the customers?*
+
+Or questions specific to the domain of the Agent thanks to the previously deployed and registered Customer and Finance MCP servers
+
+[.console-input]
+[source,text,role="copypaste",subs=attributes+]
+----
+Who are the customers?
+----
 
 image::chat_ui_2.png[]
+
+In Terminal 1, checks the logs of your LlamaStack instance to see what's going on under the hood:
+
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+oc logs -f deploy/llamastack-distribution-vllm
+----
+
+
+Keep running queries to see traffic going from the agent to the MCP servers and the LLM through LlamaStack.
+
+
+[.console-input]
+[source,text,role="copypaste",subs=attributes+]
+----
+Find all orders for thomashardy@example.com
+----
+
+[.console-input]
+[source,text,role="copypaste",subs=attributes+]
+----
+What invoices does customer LONEP have?
+----
+
+[.console-input]
+[source,text,role="copypaste",subs=attributes+]
+----
+What is the status of order 6 for customer LONEP?
+----
+
+
 
