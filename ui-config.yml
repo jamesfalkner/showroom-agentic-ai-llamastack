@@ -16,8 +16,8 @@ tabs:
   - name: Terminal 2
     path: /terminal/
     port: 443
-  - name: Gitea
-    url: 'https://gitea.${DOMAIN}'
 
+# - name: Gitea
+#   url: 'https://gitea.${DOMAIN}'
 #  - name: LibreChat
 #   url: 'https://librechat-librechat-${USER}.${DOMAIN}'
