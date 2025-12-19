@@ -18,8 +18,8 @@ from llama_stack_client import LlamaStackClient
 from llama_stack_client.types import UserMessage, SystemMessage, CompletionMessage
 from PyPDF2 import PdfReader
 
-# Import LlamaStack agents helper
-from llamastack_agents import create_or_get_agent_session, stream_agent_turn, format_agent_event_for_sse
+# Import LlamaStack Responses API helper
+from llamastack_responses import stream_response, format_response_event_for_sse
 
 # Import RAG initialization
 from rag_init import initialize_vector_store
@@ -48,8 +48,19 @@ logger = logging.getLogger(__name__)
 
 
 # Load configuration
+def deep_merge(base: dict, override: dict) -> dict:
+    """Deep merge two dictionaries, with override values taking precedence"""
+    result = base.copy()
+    for key, value in override.items():
+        if key in result and isinstance(result[key], dict) and isinstance(value, dict):
+            result[key] = deep_merge(result[key], value)
+        else:
+            result[key] = value
+    return result
+
+
 def load_config():
-    """Load configuration from assistant-config.yaml"""
+    """Load configuration from assistant-config.yaml with optional local overrides"""
     # Try multiple config paths (local development, Docker, absolute)
     possible_paths = [
         os.getenv("ASSISTANT_CONFIG_PATH"),
@@ -57,6 +68,9 @@ def load_config():
         "/app/config/assistant-config.yaml",  # Docker
         "./config/assistant-config.yaml",  # Running from project root
     ]
+
+    config_data = {}
+    config_file_path = None
 
     for config_path in possible_paths:
         if not config_path:
@@ -67,14 +81,33 @@ def load_config():
             try:
                 with open(config_file_path, 'r') as f:
                     config_data = yaml.safe_load(f) or {}
-                logger.info(f"Loaded configuration from {config_file_path}")
+                logger.info(f"Loaded base configuration from {config_file_path}")
                 logger.info(f"Config keys: {list(config_data.keys())}")
-                return config_data
+                break
             except Exception as e:
                 logger.warning(f"Failed to load config from {config_file_path}: {e}")
 
-    logger.warning("No configuration file found, using defaults")
-    return {}
+    if not config_data:
+        logger.warning("No configuration file found, using defaults")
+        return {}
+
+    # Check for local override file (assistant-config-local.yaml)
+    # This is used for local development to override specific settings
+    if config_file_path:
+        local_override_path = config_file_path.parent / "assistant-config-local.yaml"
+        if local_override_path.exists():
+            try:
+                with open(local_override_path, 'r') as f:
+                    local_config = yaml.safe_load(f) or {}
+                logger.info(f"Found local override config at {local_override_path}")
+                logger.info(f"Local override keys: {list(local_config.keys())}")
+                # Deep merge local config into base config
+                config_data = deep_merge(config_data, local_config)
+                logger.info("Merged local override configuration")
+            except Exception as e:
+                logger.warning(f"Failed to load local override from {local_override_path}: {e}")
+
+    return config_data
 
 
 class Config:
@@ -254,14 +287,22 @@ class MultiAgentSystem:
         self.mcp_manager = mcp_manager
         self.vector_store_id = vector_store_id
         self.client = None
-        self._tool_group_ids = []  # List of registered MCP tool group IDs
-        self._rag_tool_group_id = None
-        self._agent_sessions = {}  # Track agent sessions by user/conversation
         self._config = config_data or {}
 
         # Load LLM model from config
         llm_config = self._config.get('llm', {})
         self.llm_model = llm_config.get('model', 'openai/gpt-4o')
+
+        # Load MCP server configurations for Responses API
+        mcp_config = self._config.get('mcp', {})
+        self.mcp_servers = mcp_config.get('servers', {})
+
+        # Allow environment variable override for MCP server URLs
+        # This enables different URLs for local Podman (container names) vs OpenShift (localhost)
+        mcp_server_url_override = os.getenv('MCP_SERVER_URL')
+        if mcp_server_url_override and 'kubernetes' in self.mcp_servers:
+            logger.info(f"Overriding MCP server URL with env var: {mcp_server_url_override}")
+            self.mcp_servers['kubernetes']['url'] = mcp_server_url_override
 
         # Load agent configurations from config
         config_agents = self._config.get('agents', {})
@@ -283,92 +324,13 @@ class MultiAgentSystem:
             self.agents = {}
 
     async def initialize(self):
-        """Initialize LlamaStack client and configure tool groups"""
+        """Initialize LlamaStack client"""
         self.client = LlamaStackClient(
             base_url=self.llama_stack_url,
             timeout=config.LLM_TIMEOUT
         )
         logger.info(f"LlamaStack client initialized at {self.llama_stack_url} with {config.LLM_TIMEOUT}s timeout")
-
-        # Configure RAG tool group if vector store is available
-        if self.vector_store_id:
-            await self._configure_rag_tool_group()
-
-        # Register MCP tools with LlamaStack
-        await self._register_mcp_tools()
-
-    async def _configure_rag_tool_group(self):
-        """Configure built-in RAG tool group"""
-        try:
-            self._rag_tool_group_id = "builtin::rag"
-            logger.info(f"RAG tool group configured with vector store: {self.vector_store_id}")
-        except Exception as e:
-            logger.error(f"Failed to configure RAG tool group: {e}")
-            import traceback
-            traceback.print_exc()
-
-    async def _register_mcp_tools(self):
-        """Register MCP toolgroups from config with LlamaStack"""
-        try:
-            # Get MCP server configurations from config
-            mcp_config = self._config.get('mcp', {})
-            mcp_servers = mcp_config.get('servers', {})
-
-            if not mcp_servers:
-                logger.warning("No MCP servers configured")
-                return
-
-            # Register each MCP server as a separate toolgroup
-            for server_name, server_config in mcp_servers.items():
-                try:
-                    url = server_config.get('url')
-                    if not url:
-                        logger.warning(f"No URL specified for MCP server '{server_name}', skipping")
-                        continue
-
-                    # Generate toolgroup ID from server name (use mcp:: prefix per LlamaStack docs)
-                    tool_group_id = f"mcp::{server_name}"
-
-                    logger.info(f"Registering MCP server '{server_name}' as toolgroup '{tool_group_id}'")
-                    logger.info(f"  URL: {url}")
-
-                    # Unregister first if it exists, then register fresh
-                    try:
-                        self.client.toolgroups.unregister(toolgroup_id=tool_group_id)
-                        logger.info(f"Unregistered existing toolgroup '{tool_group_id}'")
-                    except Exception as unreg_error:
-                        # Toolgroup might not exist yet, that's fine
-                        logger.debug(f"Could not unregister '{tool_group_id}': {unreg_error}")
-
-                    # Register the toolgroup with LlamaStack
-                    self.client.toolgroups.register(
-                        toolgroup_id=tool_group_id,
-                        provider_id="model-context-protocol",
-                        mcp_endpoint={
-                            "uri": url
-                        }
-                    )
-                    logger.info(f"Successfully registered toolgroup '{tool_group_id}'")
-
-                    # Add to list of registered tool groups
-                    self._tool_group_ids.append(tool_group_id)
-
-                except Exception as e:
-                    logger.error(f"Failed to register MCP server '{server_name}': {e}")
-                    import traceback
-                    traceback.print_exc()
-                    # Continue with other servers
-
-            if self._tool_group_ids:
-                logger.info(f"Successfully registered {len(self._tool_group_ids)} MCP toolgroups: {self._tool_group_ids}")
-            else:
-                logger.warning("No MCP toolgroups were successfully registered")
-
-        except Exception as e:
-            logger.error(f"Error during MCP tool registration: {e}")
-            import traceback
-            traceback.print_exc()
-
+        logger.info("Using Responses API - tools will be configured per-request")
 
     def _select_agent(self, message: str, agent_type: Optional[str] = None) -> str:
         """Select appropriate agent based on message content"""
@@ -417,13 +379,13 @@ class MultiAgentSystem:
         if page_context:
             system_prompt += f"\n\nCURRENT PAGE: {page_context}"
 
-        # Note: RAG context is now handled automatically by the builtin::rag tool group
+        # Note: RAG context is now handled automatically by the RAG tool
 
         # Generate response
         yield f"data: {json.dumps({'status': 'Generating response...'})}\n\n"
 
-        # Use LlamaStack Agents API
-        async for chunk in self._stream_with_llamastack_agents(
+        # Use LlamaStack Responses API
+        async for chunk in self._stream_with_responses_api(
             message,
             conversation_history,
             system_prompt,
@@ -432,7 +394,7 @@ class MultiAgentSystem:
         ):
             yield chunk
 
-    async def _stream_with_llamastack_agents(
+    async def _stream_with_responses_api(
         self,
         message: str,
         conversation_history: List[ConversationMessage],
@@ -440,68 +402,71 @@ class MultiAgentSystem:
         agent_type: str,
         include_mcp: bool
     ) -> AsyncGenerator[str, None]:
-        """Stream response using LlamaStack Agents API"""
-        import hashlib
-
-        # Generate session ID from conversation context
-        conv_data = json.dumps([{"role": msg.role, "content": msg.content[:100]} for msg in conversation_history[-5:]])
-        conv_hash = hashlib.md5(conv_data.encode()).hexdigest()[:16]
-        session_id = f"{agent_type}-{conv_hash}"
+        """Stream response using LlamaStack Responses API"""
 
         try:
             # Get agent configuration
             agent_config = self.agents.get(agent_type, {})
             configured_toolgroups = agent_config.get("toolgroups", [])
 
-            # Build tool groups based on agent's configured toolgroups
-            tool_groups = []
+            # Build tools list for Responses API
+            tools = []
 
             for toolgroup in configured_toolgroups:
                 if toolgroup == "rag":
-                    # Add RAG toolgroup with vector store configuration
+                    # Add file_search tool for RAG with vector store configuration
                     if self.vector_store_id:
-                        tool_groups.append({
-                            "name": "builtin::rag/knowledge_search",
-                            "args": {"vector_db_ids": [self.vector_store_id]}
+                        tools.append({
+                            "type": "file_search",
+                            "vector_store_ids": [self.vector_store_id]
                         })
-                        logger.info(f"Including RAG toolgroup: builtin::rag/knowledge_search with vector store {self.vector_store_id}")
+                        logger.info(f"Including file_search tool with vector store {self.vector_store_id}")
+
                 elif toolgroup.startswith("mcp::"):
-                    # Add MCP toolgroup if it's registered and MCP is enabled
-                    if include_mcp and toolgroup in self._tool_group_ids:
-                        # MCP toolgroups are referenced by string name only (not dict)
-                        tool_groups.append(toolgroup)
-                        logger.info(f"Including MCP toolgroup: {toolgroup}")
-                else:
-                    logger.info(f"Including custom toolgroup: {toolgroup}")
-                    tool_groups.append(toolgroup)
+                    # Add MCP tool if MCP is enabled
+                    if include_mcp:
+                        # Extract server name from toolgroup (e.g., "mcp::kubernetes" -> "kubernetes")
+                        server_name = toolgroup.replace("mcp::", "")
+                        server_config = self.mcp_servers.get(server_name)
 
-            logger.info(f"Agent '{agent_type}' configured with toolgroups: {tool_groups}")
+                        if server_config and 'url' in server_config:
+                            mcp_tool = {
+                                "type": "mcp",
+                                "server_url": server_config['url'],
+                                "server_label": f"{server_name.title()} tools"
+                            }
+                            # Add headers if configured
+                            if 'headers' in server_config:
+                                mcp_tool['headers'] = server_config['headers']
 
-            # Create or get agent session
-            session, agent_id = await create_or_get_agent_session(
+                            tools.append(mcp_tool)
+                            logger.info(f"Including MCP tool: {server_name} at {server_config['url']}")
+
+                elif toolgroup == "builtin::websearch":
+                    # Add web_search tool
+                    tools.append({
+                        "type": "web_search"
+                    })
+                    logger.info(f"Including web_search tool")
+
+            logger.info(f"Agent '{agent_type}' configured with {len(tools)} tools")
+
+            # Stream the response using Responses API
+            async for event in stream_response(
                 self.client,
-                session_id=session_id,
-                agent_config_name=agent_type,
-                system_prompt=system_prompt,
-                tool_groups=tool_groups if tool_groups else None,
-                model=self.llm_model
-            )
-
-            # Stream the agent turn using the actual session ID from the created session
-            async for event in stream_agent_turn(
-                self.client,
-                agent_id=agent_id,
-                session_id=session.session_id,
+                model=self.llm_model,
                 user_message=message,
-                stream=True
+                instructions=system_prompt,
+                tools=tools if tools else None,
+                previous_response_id=None  # TODO: Could track this for multi-turn context
             ):
                 # Format event for SSE
-                formatted = format_agent_event_for_sse(event)
+                formatted = format_response_event_for_sse(event)
                 if formatted:
                     yield f"data: {formatted}\n\n"
 
         except Exception as e:
-            logger.error(f"LlamaStack agents error: {e}")
+            logger.error(f"LlamaStack Responses API error: {e}")
             import traceback
             traceback.print_exc()
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
@@ -728,11 +693,10 @@ async def health_check():
     if mcp_manager and not mcp_manager._initialized:
         errors.append("MCP manager not initialized")
 
-    # Check if MCP toolgroups were registered (if MCP is configured)
-    mcp_config = config.config_data.get('mcp', {})
-    if mcp_config.get('servers'):
-        if not agent_system or not agent_system._tool_group_ids:
-            errors.append("MCP servers configured but no toolgroups registered")
+    # Check if MCP servers are configured
+    mcp_servers = []
+    if agent_system and agent_system.mcp_servers:
+        mcp_servers = list(agent_system.mcp_servers.keys())
 
     # Check if vector store initialized
     if not agent_system or not agent_system.vector_store_id:
@@ -744,16 +708,17 @@ async def health_check():
     response_data = {
         "status": "healthy" if is_healthy else "unhealthy",
         "version": "2.0.0",
+        "api_type": "responses",  # Using Responses API now
         "llama_stack": {
             "enabled": True,
             "url": config.LLAMA_STACK_URL,
             "healthy": llama_stack_healthy
         },
         "vector_store": agent_system.vector_store_id if agent_system else None,
-        "rag_enabled": agent_system._rag_tool_group_id is not None if agent_system else False,
+        "rag_enabled": agent_system.vector_store_id is not None if agent_system else False,
         "agents": list(agent_system.agents.keys()) if agent_system else [],
         "mcp_initialized": mcp_manager._initialized if mcp_manager else False,
-        "mcp_toolgroups": agent_system._tool_group_ids if agent_system else []
+        "mcp_servers": mcp_servers
     }
 
     if errors:

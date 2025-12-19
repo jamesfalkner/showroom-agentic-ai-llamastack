@@ -16,7 +16,10 @@ mcp:
   servers:
     # Kubernetes MCP Server - provides kubectl/oc commands
     kubernetes:
-      # Remote MCP server URL (localhost since it's a sidecar container)
+      # Remote MCP server URL configuration:
+      # - In OpenShift Pod (sidecars): use localhost since containers share network namespace
+      # - In local Podman: set MCP_SERVER_URL env var to use container name (e.g., http://showroom-mcp-server:3000/mcp)
+      #   The Podman run script automatically sets this override
       url: "http://localhost:3000/mcp"
 
     # Example: Add more MCP servers here in the future
@@ -53,10 +56,10 @@ llm:
     # Optional: Custom endpoint URL (sets VLLM_URL)
     # For local vLLM running on host machine, use host.containers.internal
     # Example: "http://host.containers.internal:8000/v1"
-    endpoint: "http://host.containers.internal:8000/v1"
+    # endpoint: "http://host.containers.internal:8000/v1"
 
     # Maximum tokens for vLLM generation
-    max_tokens: 40960
+    # max_tokens: 4096
 
     # TLS certificate verification (true/false)
     # tls_verify: true
@@ -66,7 +69,7 @@ llm:
     # Optional: Custom endpoint URL (sets OLLAMA_URL)
     # For local Ollama running on host machine, use host.containers.internal
     # Example: "http://host.containers.internal:11434"
-    endpoint: "http://host.containers.internal:11434"
+    # endpoint: "http://host.containers.internal:11434"
 
 # Agent Configurations
 # Define different specialized agents with their system prompts and available toolgroups

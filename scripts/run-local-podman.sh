@@ -275,7 +275,10 @@ echo ""
 echo -e "${YELLOW}6. Starting Backend API container...${NC}"
 
 # Build backend environment variables
+# Note: MCP_SERVER_URL uses container name for Podman networking (containers can't access localhost)
+# In OpenShift, localhost works because sidecars share the same Pod network namespace
 BACKEND_ENV_VARS="-e PORT=8080 -e LLAMA_STACK_URL=\"http://$LLAMASTACK_CONTAINER:8321\" \
+-e MCP_SERVER_URL=\"http://$MCP_CONTAINER:3000/mcp\" \
 -e ASSISTANT_CONFIG_PATH=\"/app/config/assistant-config.yaml\" \
 -e CONTENT_DIR=\"/app/rag-content\" \
 -e PDF_DIR=\"/app/content/modules/ROOT/assets/techdocs\""

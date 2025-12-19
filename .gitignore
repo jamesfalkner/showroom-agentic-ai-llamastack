@@ -36,6 +36,9 @@ __pycache__/
 .env.local
 .env.*.local
 
+# Ignore local config overrides (for local development only)
+config/assistant-config-local.yaml
+
 # Ignore sensitive or private information
 secrets.json
 
