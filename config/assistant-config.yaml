@@ -31,15 +31,15 @@ llm:
   # LLM Engines: List of engines to enable (supports multiple providers simultaneously)
   # Supported engines: openai, vllm, ollama
   # Example: ["vllm", "ollama"] enables both vLLM for inference and Ollama for embeddings
-  engines: ["vllm", "ollama"]
+  engines: ["openai"]
 
   # LlamaStack will use this model for generating responses
   # The model name should match one of the enabled engines (e.g., "vllm/model-name")
-  model: "vllm/Qwen3-14B"
+  model: "openai/gpt-4o"
 
   # Embedding model for RAG vector store
   # Can use a different engine than the main model (e.g., "ollama/nomic-embed-text")
-  embedding_model: "ollama/nomic-embed-text:v1.5"
+  embedding_model: "openai/text-embedding-3-small"
 
   # HTTP timeout in seconds for LlamaStack client requests
   # Increase this for slower models or when using local vLLM/Ollama

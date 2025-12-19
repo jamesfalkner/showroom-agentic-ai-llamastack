@@ -3,31 +3,13 @@
 LlamaStack Responses API integration
 Functions for using LlamaStack's modern Responses API with MCP tools and RAG
 """
+import asyncio
 import json
 import logging
 import re
 from typing import List, Dict, Optional, AsyncGenerator
 
 logger = logging.getLogger(__name__)
-
-
-def _strip_inline_citations(text: str) -> str:
-    """
-    Remove inline file citations from text.
-
-    The Responses API with file_search automatically inserts citations like:
-    - <|file-abc123|>
-    - 【35†source】
-
-    Since we display sources separately, we strip these out.
-    """
-    # Remove <|file-id|> style citations
-    text = re.sub(r'<\|file-[a-f0-9-]+\|>', '', text)
-
-    # Remove 【number†source】 style citations (traditional format)
-    text = re.sub(r'【\d+†[^】]+】', '', text)
-
-    return text
 
 
 async def stream_response(
@@ -84,6 +66,8 @@ async def stream_response(
                 logger.info(f"Event data: {event.model_dump()}")
 
             yield event
+            # Force event loop to yield and flush
+            await asyncio.sleep(0)
 
     except Exception as e:
         logger.error(f"Error creating response: {e}")
@@ -112,19 +96,13 @@ def format_response_event_for_sse(chunk) -> Optional[str]:
         if event_type == 'response.reasoning_text.delta':
             delta = getattr(chunk, 'delta', None)
             if delta:
-                # Strip inline file citations (format: <|file-id|>)
-                cleaned_delta = _strip_inline_citations(delta)
-                if cleaned_delta:
-                    return json.dumps({'content': cleaned_delta})
+                return json.dumps({'reasoning': delta})
 
         # Handle output text deltas (final response content)
         elif event_type == 'response.output_text.delta':
             delta = getattr(chunk, 'delta', None)
             if delta:
-                # Strip inline file citations (format: <|file-id|>)
-                cleaned_delta = _strip_inline_citations(delta)
-                if cleaned_delta:
-                    return json.dumps({'content': cleaned_delta})
+                return json.dumps({'content': delta})
 
         # Handle response creation
         elif event_type == 'response.created':

@@ -42,11 +42,25 @@ fi
 # Read LLM engine configuration from assistant-config.yaml
 echo -e "${YELLOW}Reading LLM engine configuration...${NC}"
 
+# Define config file paths
+CONFIG_FILE="$PROJECT_ROOT/config/assistant-config.yaml"
+LOCAL_CONFIG_FILE="$PROJECT_ROOT/config/assistant-config-local.yaml"
+
+# Merge configs using yq (local overrides take precedence)
+if [ -f "$LOCAL_CONFIG_FILE" ]; then
+    echo -e "${GREEN}✓ Found local config override: assistant-config-local.yaml${NC}"
+    # Use yq to merge: base config * local config (local overrides base)
+    MERGED_CONFIG=$(yq '. * load("'"$LOCAL_CONFIG_FILE"'")' "$CONFIG_FILE")
+else
+    # No local override, just use base config
+    MERGED_CONFIG=$(cat "$CONFIG_FILE")
+fi
+
 # Support both old (single engine) and new (multiple engines) format
-LLM_ENGINES_RAW=$(yq eval '.llm.engines // []' "$PROJECT_ROOT/config/assistant-config.yaml")
+LLM_ENGINES_RAW=$(echo "$MERGED_CONFIG" | yq eval '.llm.engines // []')
 if [ "$LLM_ENGINES_RAW" = "[]" ] || [ -z "$LLM_ENGINES_RAW" ]; then
     # Fallback to old single engine format
-    SINGLE_ENGINE=$(yq eval '.llm.engine // "openai"' "$PROJECT_ROOT/config/assistant-config.yaml")
+    SINGLE_ENGINE=$(echo "$MERGED_CONFIG" | yq eval '.llm.engine // "openai"')
     LLM_ENGINES=("$SINGLE_ENGINE")
     echo -e "${YELLOW}Using single engine format, defaulting to '$SINGLE_ENGINE'${NC}"
 else
@@ -54,19 +68,19 @@ else
     LLM_ENGINES=()
     while IFS= read -r engine; do
         LLM_ENGINES+=("$engine")
-    done < <(yq eval '.llm.engines[]' "$PROJECT_ROOT/config/assistant-config.yaml")
+    done < <(echo "$MERGED_CONFIG" | yq eval '.llm.engines[]')
 fi
 
 echo -e "${GREEN}✓ Enabled LLM Engines: ${LLM_ENGINES[*]}${NC}"
 
-# Read per-engine endpoint configuration
-OPENAI_ENDPOINT=$(yq eval '.llm.openai.endpoint // ""' "$PROJECT_ROOT/config/assistant-config.yaml")
-VLLM_ENDPOINT=$(yq eval '.llm.vllm.endpoint // ""' "$PROJECT_ROOT/config/assistant-config.yaml")
-OLLAMA_ENDPOINT=$(yq eval '.llm.ollama.endpoint // ""' "$PROJECT_ROOT/config/assistant-config.yaml")
+# Read per-engine endpoint configuration from merged config
+OPENAI_ENDPOINT=$(echo "$MERGED_CONFIG" | yq eval '.llm.openai.endpoint // ""')
+VLLM_ENDPOINT=$(echo "$MERGED_CONFIG" | yq eval '.llm.vllm.endpoint // ""')
+OLLAMA_ENDPOINT=$(echo "$MERGED_CONFIG" | yq eval '.llm.ollama.endpoint // ""')
 
-# Read vLLM-specific configuration
-VLLM_MAX_TOKENS=$(yq eval '.llm.vllm.max_tokens // ""' "$PROJECT_ROOT/config/assistant-config.yaml")
-VLLM_TLS_VERIFY=$(yq eval '.llm.vllm.tls_verify // ""' "$PROJECT_ROOT/config/assistant-config.yaml")
+# Read vLLM-specific configuration from merged config
+VLLM_MAX_TOKENS=$(echo "$MERGED_CONFIG" | yq eval '.llm.vllm.max_tokens // ""')
+VLLM_TLS_VERIFY=$(echo "$MERGED_CONFIG" | yq eval '.llm.vllm.tls_verify // ""')
 
 # Load API keys for all enabled engines
 if [ ! -f "$PROJECT_ROOT/.env.yaml" ]; then
@@ -277,7 +291,7 @@ echo -e "${YELLOW}6. Starting Backend API container...${NC}"
 # Build backend environment variables
 # Note: MCP_SERVER_URL uses container name for Podman networking (containers can't access localhost)
 # In OpenShift, localhost works because sidecars share the same Pod network namespace
-BACKEND_ENV_VARS="-e PORT=8080 -e LLAMA_STACK_URL=\"http://$LLAMASTACK_CONTAINER:8321\" \
+BACKEND_ENV_VARS="-e PORT=8080 -e LOG_LEVEL=DEBUG -e LLAMA_STACK_URL=\"http://$LLAMASTACK_CONTAINER:8321\" \
 -e MCP_SERVER_URL=\"http://$MCP_CONTAINER:3000/mcp\" \
 -e ASSISTANT_CONFIG_PATH=\"/app/config/assistant-config.yaml\" \
 -e CONTENT_DIR=\"/app/rag-content\" \

@@ -7,6 +7,7 @@ import {
 } from '@/components/ui/shadcn-io/ai/conversation'
 import { Loader } from '@/components/ui/shadcn-io/ai/loader'
 import { Message, MessageAvatar, MessageContent } from '@/components/ui/shadcn-io/ai/message'
+import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ui/shadcn-io/ai/reasoning'
 import { Sources, SourcesTrigger, SourcesContent, Source } from '@/components/ui/shadcn-io/ai/source'
 import {
   PromptInput,
@@ -25,6 +26,7 @@ import { MarkdownRenderer } from '@/components/ui/markdown-renderer'
 import { RotateCcwIcon } from 'lucide-react'
 import { nanoid } from 'nanoid'
 import { type FormEventHandler, useCallback, useEffect, useState } from 'react'
+import { flushSync } from 'react-dom'
 
 type Source = {
   title: string
@@ -39,6 +41,7 @@ type ChatMessage = {
   timestamp: Date
   isStreaming?: boolean
   sources?: Source[]
+  reasoning?: string
 }
 
 type Agent = {
@@ -268,6 +271,24 @@ export default function ChatPage() {
                     })
                   }
 
+                  if (data.reasoning) {
+                    // Update the assistant message by appending reasoning text
+                    // Use flushSync to force immediate synchronous rendering
+                    flushSync(() => {
+                      setMessages(prev => {
+                        const newMessages = [...prev]
+                        const lastMsg = newMessages[newMessages.length - 1]
+                        if (lastMsg && lastMsg.role === 'assistant' && lastMsg.id === assistantMessageId) {
+                          newMessages[newMessages.length - 1] = {
+                            ...lastMsg,
+                            reasoning: (lastMsg.reasoning || '') + data.reasoning
+                          }
+                        }
+                        return newMessages
+                      })
+                    })
+                  }
+
                   if (data.sources) {
                     // Add sources to the assistant message
                     setMessages(prev => {
@@ -411,13 +432,21 @@ export default function ChatPage() {
             <div key={message.id} className="space-y-3">
               <Message from={message.role}>
                 <MessageContent>
-                  {message.isStreaming && message.content === '' ? (
+                  {message.isStreaming && message.content === '' && !message.reasoning ? (
                     <div className="flex items-center gap-2">
                       <Loader size={14} />
                       <span className="text-muted-foreground text-sm">Thinking...</span>
                     </div>
                   ) : (
                     <>
+                      {/* Show reasoning for assistant messages if available */}
+                      {message.role === 'assistant' && message.reasoning !== undefined && (
+                        <Reasoning isStreaming={message.isStreaming || false}>
+                          <ReasoningTrigger />
+                          <ReasoningContent>{message.reasoning}</ReasoningContent>
+                        </Reasoning>
+                      )}
+
                       <MarkdownRenderer>{message.content}</MarkdownRenderer>
 
                       {/* Show example questions below the first message */}
