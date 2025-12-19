@@ -8,7 +8,9 @@ import {
 import { Loader } from '@/components/ui/shadcn-io/ai/loader'
 import { Message, MessageAvatar, MessageContent } from '@/components/ui/shadcn-io/ai/message'
 import { Reasoning, ReasoningTrigger, ReasoningContent } from '@/components/ui/shadcn-io/ai/reasoning'
+import { Response } from '@/components/ui/shadcn-io/ai/response'
 import { Sources, SourcesTrigger, SourcesContent, Source } from '@/components/ui/shadcn-io/ai/source'
+import { Tool, ToolHeader, ToolContent, ToolInput, ToolOutput } from '@/components/ui/shadcn-io/ai/tool'
 import {
   PromptInput,
   PromptInputModelSelect,
@@ -34,6 +36,15 @@ type Source = {
   content_type: string
 }
 
+type ToolCall = {
+  id: string
+  name: string
+  state: 'input-streaming' | 'input-available' | 'output-available' | 'output-error'
+  input?: any
+  output?: any
+  errorText?: string
+}
+
 type ChatMessage = {
   id: string
   content: string
@@ -42,6 +53,7 @@ type ChatMessage = {
   isStreaming?: boolean
   sources?: Source[]
   reasoning?: string
+  toolCalls?: Record<string, ToolCall>
 }
 
 type Agent = {
@@ -304,6 +316,28 @@ export default function ChatPage() {
                     })
                   }
 
+                  if (data.tool_call) {
+                    // Update tool call in the assistant message
+                    setMessages(prev => {
+                      const newMessages = [...prev]
+                      const lastMsg = newMessages[newMessages.length - 1]
+                      if (lastMsg && lastMsg.role === 'assistant' && lastMsg.id === assistantMessageId) {
+                        const toolCalls = lastMsg.toolCalls || {}
+                        newMessages[newMessages.length - 1] = {
+                          ...lastMsg,
+                          toolCalls: {
+                            ...toolCalls,
+                            [data.tool_call.id]: {
+                              ...toolCalls[data.tool_call.id],
+                              ...data.tool_call
+                            }
+                          }
+                        }
+                      }
+                      return newMessages
+                    })
+                  }
+
                   if (data.error) {
                     console.error('Error from backend:', data.error)
                     setMessages(prev => {
@@ -443,11 +477,33 @@ export default function ChatPage() {
                       {message.role === 'assistant' && message.reasoning !== undefined && (
                         <Reasoning isStreaming={message.isStreaming || false}>
                           <ReasoningTrigger />
-                          <ReasoningContent>{message.reasoning}</ReasoningContent>
+                          <ReasoningContent>
+                            <Response className="grid gap-2 italic text-muted-foreground">
+                              {message.reasoning}
+                            </Response>
+
+                            {/* Show tool calls inside reasoning - they collapse together */}
+                            {message.toolCalls && Object.keys(message.toolCalls).length > 0 && (
+                              <div className="mt-4 space-y-2">
+                                {Object.values(message.toolCalls).map((toolCall) => (
+                                  <Tool key={toolCall.id}>
+                                    <ToolHeader type={toolCall.name} state={toolCall.state} />
+                                    <ToolContent>
+                                      {toolCall.input && <ToolInput input={toolCall.input} />}
+                                      {toolCall.output && <ToolOutput output={toolCall.output} errorText={undefined} />}
+                                      {toolCall.errorText && <ToolOutput output={undefined} errorText={toolCall.errorText} />}
+                                    </ToolContent>
+                                  </Tool>
+                                ))}
+                              </div>
+                            )}
+                          </ReasoningContent>
                         </Reasoning>
                       )}
 
-                      <MarkdownRenderer>{message.content}</MarkdownRenderer>
+                      <div className={message.reasoning !== undefined ? "mt-6" : ""}>
+                        <MarkdownRenderer>{message.content}</MarkdownRenderer>
+                      </div>
 
                       {/* Show example questions below the first message */}
                       {messageIdx === 0 && messages.length === 1 && exampleQuestions.length > 0 && (

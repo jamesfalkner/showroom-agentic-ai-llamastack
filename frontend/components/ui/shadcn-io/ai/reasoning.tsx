@@ -156,9 +156,7 @@ export const ReasoningTrigger = memo(
 
 export type ReasoningContentProps = ComponentProps<
   typeof CollapsibleContent
-> & {
-  children: string;
-};
+>;
 
 export const ReasoningContent = memo(
   ({ className, children, ...props }: ReasoningContentProps) => (
@@ -170,7 +168,7 @@ export const ReasoningContent = memo(
       )}
       {...props}
     >
-      <Response className="grid gap-2 italic text-muted-foreground">{children}</Response>
+      {children}
     </CollapsibleContent>
   )
 );

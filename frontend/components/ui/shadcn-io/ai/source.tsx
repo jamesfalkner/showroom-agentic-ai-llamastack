@@ -60,6 +60,7 @@ export const Source = ({ href, title, children, ...props }: SourceProps) => (
   <a
     className="flex items-center gap-2"
     href={href}
+    target="_top"
     {...props}
   >
     {children ?? (

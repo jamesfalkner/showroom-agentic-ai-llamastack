@@ -126,6 +126,64 @@ def format_response_event_for_sse(chunk) -> Optional[str]:
 
         # Handle output item start (e.g., message output starting)
         elif event_type == 'response.output_item.added':
+            # Check if this is a tool call being added
+            item = getattr(chunk, 'item', None)
+            if item:
+                item_type = getattr(item, 'type', None)
+                if item_type == 'mcp_call':
+                    # MCP tool call started
+                    tool_id = getattr(item, 'id', None)
+                    tool_name = getattr(item, 'name', None)
+
+                    logger.info(f"MCP tool call added - id: {tool_id}, name: {tool_name}")
+
+                    if tool_id and tool_name:
+                        return json.dumps({
+                            'tool_call': {
+                                'id': tool_id,
+                                'name': tool_name,
+                                'state': 'input-available',
+                                'input': None,
+                                'output': None
+                            }
+                        })
+                elif item_type == 'file_search_call':
+                    # File search tool call started
+                    tool_id = getattr(item, 'id', None)
+
+                    # Extract search queries (it's an array)
+                    queries = getattr(item, 'queries', [])
+
+                    # Get the first query if available
+                    query = None
+                    if queries and len(queries) > 0:
+                        query_raw = queries[0]
+                        # The query might be JSON-encoded like '{"query": "search text"}'
+                        if isinstance(query_raw, str):
+                            try:
+                                # Try to parse as JSON
+                                query_obj = json.loads(query_raw)
+                                # Extract the actual query text
+                                query = query_obj.get('query', query_raw)
+                            except:
+                                # Not JSON, use as-is
+                                query = query_raw
+                        else:
+                            query = str(query_raw)
+
+                    logger.info(f"File search tool call added - id: {tool_id}, query: {query}")
+
+                    if tool_id:
+                        return json.dumps({
+                            'tool_call': {
+                                'id': tool_id,
+                                'name': 'file_search',
+                                'state': 'input-available',
+                                'input': {'query': query} if query else None,
+                                'output': None
+                            }
+                        })
+
             return json.dumps({'status': 'Generating response...'})
 
         # Handle content part boundaries
@@ -153,13 +211,72 @@ def format_response_event_for_sse(chunk) -> Optional[str]:
             return json.dumps({'status': 'Tools loaded'})
 
         elif event_type == 'response.mcp_call.in_progress':
+            # MCP tool call started - send tool call info to frontend
+            call_id = getattr(chunk, 'call_id', None)
+            tool_name = getattr(chunk, 'name', None)
+
+            # Try to extract from nested mcp_call object if not found at top level
+            if not call_id or not tool_name:
+                mcp_call = getattr(chunk, 'mcp_call', None)
+                if mcp_call:
+                    call_id = call_id or getattr(mcp_call, 'call_id', None) or getattr(mcp_call, 'id', None)
+                    tool_name = tool_name or getattr(mcp_call, 'name', None) or getattr(mcp_call, 'tool_name', None)
+
+            logger.info(f"MCP call in progress - call_id: {call_id}, tool_name: {tool_name}")
+
+            if call_id and tool_name:
+                return json.dumps({
+                    'tool_call': {
+                        'id': call_id,
+                        'name': tool_name,
+                        'state': 'input-available',
+                        'input': None,
+                        'output': None
+                    }
+                })
             return json.dumps({'status': 'Calling tool...'})
 
         elif event_type == 'response.mcp_call.completed':
+            # MCP tool call completed - send result to frontend
+            call_id = getattr(chunk, 'call_id', None)
+            tool_name = getattr(chunk, 'name', None)
+            output = None
+
+            # Try to extract from nested mcp_call object
+            mcp_call = getattr(chunk, 'mcp_call', None)
+            if mcp_call:
+                call_id = call_id or getattr(mcp_call, 'call_id', None) or getattr(mcp_call, 'id', None)
+                tool_name = tool_name or getattr(mcp_call, 'name', None) or getattr(mcp_call, 'tool_name', None)
+                output = getattr(mcp_call, 'output', None) or getattr(mcp_call, 'result', None)
+
+            logger.info(f"MCP call completed - call_id: {call_id}, tool_name: {tool_name}, has_output: {output is not None}")
+
+            if call_id:
+                return json.dumps({
+                    'tool_call': {
+                        'id': call_id,
+                        'name': tool_name,
+                        'state': 'output-available',
+                        'output': str(output) if output else None
+                    }
+                })
             return json.dumps({'status': 'Tool execution complete'})
 
         # Handle file search events
         elif event_type == 'response.file_search_call.in_progress':
+            # File search started - send tool call info
+            call_id = getattr(chunk, 'call_id', None)
+
+            if call_id:
+                return json.dumps({
+                    'tool_call': {
+                        'id': call_id,
+                        'name': 'file_search',
+                        'state': 'input-available',
+                        'input': None,
+                        'output': None
+                    }
+                })
             return json.dumps({'status': 'Searching knowledge base...'})
 
         elif event_type == 'response.file_search_call.searching':
@@ -207,13 +324,77 @@ def format_response_event_for_sse(chunk) -> Optional[str]:
                 logger.warning("File search completed but no results found in event")
                 return None
 
-        # Handle output item done (contains file search results)
+        # Handle output item done (contains file search results and tool call results)
         elif event_type == 'response.output_item.done':
-            # Check if this is a file search result
             item = getattr(chunk, 'item', None)
-            if item and getattr(item, 'type', None) == 'file_search_call':
+            if not item:
+                return None
+
+            item_type = getattr(item, 'type', None)
+
+            # Check if this is an MCP tool call completion
+            if item_type == 'mcp_call':
+                tool_id = getattr(item, 'id', None)
+                tool_name = getattr(item, 'name', None)
+                tool_arguments = getattr(item, 'arguments', None)
+                tool_output = getattr(item, 'output', None)
+
+                logger.info(f"MCP tool call completed - id: {tool_id}, name: {tool_name}, has_output: {tool_output is not None}")
+
+                if tool_id:
+                    # Parse arguments JSON if available
+                    input_data = None
+                    if tool_arguments:
+                        try:
+                            input_data = json.loads(tool_arguments)
+                        except:
+                            input_data = tool_arguments
+
+                    return json.dumps({
+                        'tool_call': {
+                            'id': tool_id,
+                            'name': tool_name,
+                            'state': 'output-available',
+                            'input': input_data,
+                            'output': tool_output
+                        }
+                    })
+
+            # Check if this is a file search result
+            elif item_type == 'file_search_call':
+                tool_id = getattr(item, 'id', None)
                 results = getattr(item, 'results', [])
 
+                # Extract search queries (it's an array)
+                queries = getattr(item, 'queries', [])
+
+                # Get the first query if available
+                query = None
+                if queries and len(queries) > 0:
+                    query_raw = queries[0]
+                    # In the .done event, queries are already parsed (not JSON strings)
+                    if isinstance(query_raw, str):
+                        query = query_raw
+                    else:
+                        query = str(query_raw)
+
+                logger.info(f"File search completed - id: {tool_id}, query: {query}, result_count: {len(results) if results else 0}")
+
+                # Build response with both tool completion and sources
+                response_data = {}
+
+                # Add tool call completion
+                if tool_id:
+                    result_count = len(results) if results else 0
+                    response_data['tool_call'] = {
+                        'id': tool_id,
+                        'name': 'file_search',
+                        'state': 'output-available',
+                        'input': {'query': query} if query else None,
+                        'output': f'Found {result_count} results' if result_count > 0 else 'No results found'
+                    }
+
+                # Extract sources if available
                 if results:
                     logger.info(f"Found {len(results)} file search results in output_item.done")
                     sources = []
@@ -254,7 +435,11 @@ def format_response_event_for_sse(chunk) -> Optional[str]:
 
                     if sources:
                         logger.info(f"Extracted {len(sources)} sources from file search")
-                        return json.dumps({'sources': sources})
+                        response_data['sources'] = sources
+
+                # Return combined response with both tool completion and sources
+                if response_data:
+                    return json.dumps(response_data)
 
             return None
 

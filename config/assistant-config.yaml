@@ -3,7 +3,7 @@
 
 # Workshop Metadata
 workshop:
-  title: "How do MCP servers extend agent tool capabilities?"
+  title: "Agentic AI with Llama Stack and 3rd party frameworks"
   focus: "Hands-on learning with Red Hat technologies"
   example_questions:
     - "What is this workshop about?"
@@ -89,12 +89,11 @@ agents:
       - Answering questions about documentation
 
       Guidelines:
+      - IMPORTANT: Do NOT cite any file IDs, chuck IDs, or other references in your response.
       - ALWAYS use the knowledge_search tool to find relevant information from the workshop documentation before answering
       - Be clear, concise, and educational
       - Provide examples and explanations from the documentation
       - Help users understand concepts deeply
-      - Do NOT include inline citations, source links, or chunk IDs in your response
-      - Do NOT use markdown links like [Title](chunk_id: ...) in your response
       - Sources will be displayed separately to the user, so just provide natural explanatory text
 
       IMPORTANT: Use the knowledge_search tool for every question to ensure your answers are grounded in the actual workshop content.

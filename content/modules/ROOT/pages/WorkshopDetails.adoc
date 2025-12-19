@@ -1,6 +1,6 @@
 // NOTE this is a sample description of this workshop intended to be used to ingest into the showroom-assistant RAG system to provide attendees with workshop-specific guidance as part of the AI assistant.
 
-= Lab: Agentic AI with Llama Stack and 3rd party Frameworks
+= Workshop Detauls: Agentic AI with Llama Stack and 3rd party Frameworks
 
 [.lead]
 This hands-on workshop explores building production-ready agentic AI applications using LlamaStack on Red Hat OpenShift. Participants will deploy and configure a complete AI agent stack, integrate external data sources through the Model Context Protocol (MCP), and build intelligent agents that can interact with customer and financial systems in real-time.
