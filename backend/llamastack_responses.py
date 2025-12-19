@@ -119,8 +119,28 @@ def format_response_event_for_sse(chunk) -> Optional[str]:
             if error_info:
                 error_code = getattr(error_info, 'code', 'unknown_error')
                 error_message = getattr(error_info, 'message', 'An error occurred')
+
+                # Try to parse nested error JSON (common for API errors)
+                # Format: "Error code: 400 - {'error': {'message': 'actual message', ...}}"
+                if "Error code:" in error_message and "{'error':" in error_message:
+                    try:
+                        # Extract the JSON part after "Error code: XXX - "
+                        import re
+                        json_match = re.search(r"Error code: \d+ - ({.*})", error_message)
+                        if json_match:
+                            # Replace single quotes with double quotes for valid JSON
+                            json_str = json_match.group(1).replace("'", '"')
+                            nested_error = json.loads(json_str)
+                            # Extract the inner error message
+                            if 'error' in nested_error and 'message' in nested_error['error']:
+                                error_message = nested_error['error']['message']
+                                logger.info(f"Extracted nested error message: {error_message}")
+                    except Exception as e:
+                        logger.warning(f"Failed to parse nested error JSON: {e}")
+                        # Keep original error message
+
                 logger.error(f"Response failed: {error_code} - {error_message}")
-                return json.dumps({'error': f"{error_message} (Error code: {error_code})"})
+                return json.dumps({'error': error_message})
             else:
                 return json.dumps({'error': 'Response failed with unknown error'})
 

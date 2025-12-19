@@ -98,9 +98,10 @@ export default function ChatPage() {
       const stored = localStorage.getItem(STORAGE_KEY_MESSAGES)
       if (stored) {
         const parsed = JSON.parse(stored)
-        // Convert timestamp strings back to Date objects
+        // Convert timestamp strings back to Date objects and clean file references
         return parsed.map((msg: any) => ({
           ...msg,
+          content: msg.content ? msg.content.replace(/<\|file-[a-f0-9]+\|>/g, '') : msg.content,
           timestamp: msg.timestamp ? new Date(msg.timestamp) : new Date()
         }))
       }
@@ -360,13 +361,17 @@ export default function ChatPage() {
           }
         }
 
-        // Mark streaming as complete
+        // Mark streaming as complete and clean up file references
         setMessages(prev => {
           const newMessages = [...prev]
           const lastMsg = newMessages[newMessages.length - 1]
           if (lastMsg && lastMsg.id === assistantMessageId) {
+            // Remove file reference markers like <|file-xxx|>
+            const cleanedContent = lastMsg.content.replace(/<\|file-[a-f0-9]+\|>/g, '')
+
             newMessages[newMessages.length - 1] = {
               ...lastMsg,
+              content: cleanedContent,
               isStreaming: false
             }
           }
@@ -379,9 +384,12 @@ export default function ChatPage() {
           const newMessages = [...prev]
           const lastMsg = newMessages[newMessages.length - 1]
           if (lastMsg && lastMsg.id === assistantMessageId) {
+            // Clean up any file references before setting error message
+            const cleanedContent = lastMsg.content.replace(/<\|file-[a-f0-9]+\|>/g, '')
+
             newMessages[newMessages.length - 1] = {
               ...lastMsg,
-              content: 'Sorry, I encountered an error. Please try again.',
+              content: cleanedContent || 'Sorry, I encountered an error. Please try again.',
               isStreaming: false
             }
           }

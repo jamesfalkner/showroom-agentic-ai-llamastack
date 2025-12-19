@@ -27,8 +27,8 @@
     position: absolute;
     bottom: 70px;
     right: 0;
-    width: 400px;
-    height: 600px;
+    width: 650px;
+    height: 800px;
     background: white;
     border-radius: 12px;
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
@@ -46,25 +46,44 @@
       align-items: center;
       font-family: 'Red Hat Text', sans-serif;
     ">
-      <div style="display: flex; align-items: center; gap: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px; pointer-events: none;">
         <img src="{{uiRootPath}}/img/favicon.ico" alt="Logo" style="width: 24px; height: 24px;">
-        <h3 style="margin: 0; font-size: 16px; font-weight: 500;">AI Assistant</h3>
+        <h3 style="margin: 0; font-size: 16px; font-weight: 500; color: white;">AI Assistant</h3>
       </div>
-      <button id="ai-assistant-close-btn" style="
-        background: transparent;
-        border: none;
-        color: white;
-        cursor: pointer;
-        font-size: 20px;
-        padding: 0;
-        width: 24px;
-        height: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-      " title="Close">
-        ✕
-      </button>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <a href="/ai-assistant/index.html" target="_blank" rel="noopener noreferrer" style="
+          background: transparent;
+          border: none;
+          color: white;
+          cursor: pointer;
+          font-size: 18px;
+          padding: 0;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          text-decoration: none;
+          transition: opacity 0.2s;
+        " title="Open AI Assistant in a new tab" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+          ⧉
+        </a>
+        <button id="ai-assistant-close-btn" style="
+          background: transparent;
+          border: none;
+          color: white;
+          cursor: pointer;
+          font-size: 20px;
+          padding: 0;
+          width: 24px;
+          height: 24px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+        " title="Close">
+          ✕
+        </button>
+      </div>
     </div>
     <iframe
       src="/ai-assistant/index.html"
