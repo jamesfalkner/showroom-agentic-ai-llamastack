@@ -51,12 +51,16 @@ curl -sS $LLAMA_STACK_BASE_URL/v1/models \
 [.console-output]
 [source,bash,subs=attributes+]
 ----
-vllm/qwen3-14b-gaudi
-bedrock/meta.llama3-1-8b-instruct-v1:0
-bedrock/meta.llama3-1-70b-instruct-v1:0
-bedrock/meta.llama3-1-405b-instruct-v1:0
+granite-embedding-125m
 sentence-transformers/nomic-ai/nomic-embed-text-v1.5
+vllm/qwen3-14b-gaudi
+vllm/Llama-Guard-3-1B
+vllm/nomic-embed-text-v1-5
+vllm/qwen25-7b-instruct
+vllm/llama-scout-17b
 ----
+
+Note: Your list of models may vary depending on what is available on the MaaS
 
 Your LlamaStack distribution provides access to multiple models. The local vLLM-hosted model (`vllm/qwen3-14b-gaudi`) runs directly on your OpenShift cluster, while the Bedrock models can be accessed through AWS when configured. The embedding model enables vector search and RAG capabilities.
 
@@ -221,7 +225,7 @@ This comprehensive API surface demonstrates LlamaStack's capabilities across the
 
 == Inference APIs
 
-LlamaStack provides multiple inference APIs to suit different application needs. Let's explore 2 primary approaches to getting responses from language models.
+LlamaStack provides multiple inference APIs to suit different application needs. Let's explore two primary approaches to getting responses from language models.
 
 === ChatCompletion API
 
@@ -245,14 +249,8 @@ curl -sS $LLAMA_STACK_BASE_URL/v1/chat/completions \
 [.console-output]
 [source,bash,subs=attributes+]
 ----
-<think>
-Okay, the user is asking, "what model are you?" I need to respond accurately. First, I should confirm my identity as Qwen, the large language model developed by Alibaba Cloud. Then, I should mention my capabilities, like answering questions, creating text, and more. Also, I should invite the user to ask any questions they have. Let me make sure the response is clear and friendly.
-</think>
-
 I am Qwen, a large language model developed by Alibaba Cloud. I can answer questions, create text, and assist with various tasks. How can I help you today?
 ----
-
-Notice how the Qwen3 model includes a `<think>` section showing its reasoning process before the final response. This transparency into the model's thought process is valuable for understanding how the AI arrives at conclusions.
 
 === Response API
 
@@ -327,10 +325,6 @@ curl -sS "$LLAMA_STACK_BASE_URL/v1/responses" \
 [.console-output]
 [source,bash,subs=attributes+]
 ----
-<think>
-Okay, the user is asking for the capital of Italy. Let me think. I know that many countries have capitals named after themselves, like Rome for Italy, but I should confirm. Wait, isn't Rome the capital? Yes, I'm pretty sure that's correct. Let me double-check in case there's any confusion with other cities. For example, sometimes people might confuse it with Florence or Venice, but those are major cities, not the capital. Also, the Italian government is based in Rome. So, the answer should be Rome. I don't think there's any recent change to that. Yeah, Rome is definitely the capital of Italy.
-</think>
-
 The capital of Italy is **Rome**. It is a historic city known for its rich cultural heritage, ancient landmarks like the Colosseum and Vatican City, and its role as the political and administrative center of the country.
 ----
 
@@ -368,9 +362,8 @@ curl -sS -H "Content-Type: application/json" $LLAMA_STACK_BASE_URL/v1/toolgroups
 ----
 <1> Use built-in RAG
 
-Your LlamaStack distribution comes pre-configured with 2 built-in tool groups:
+Your LlamaStack distribution comes pre-configured with the built-in tool group:
 
-* **Web search (Tavily)**: Enables agents to search the internet for current information
 * **RAG runtime**: Provides document retrieval and semantic search capabilities
 
 These tools can be invoked by agents during their reasoning process, allowing them to augment their knowledge with external data. In later modules, you'll see how agents automatically decide when and how to use these tools.

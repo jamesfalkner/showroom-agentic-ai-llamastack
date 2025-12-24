@@ -78,7 +78,7 @@ graph TB
 LlamaStack on Red Hat OpenShift provides several key advantages for enterprise AI deployments:
 
 **Standardization and portability**::
-The unified API allows you to switch between different model providers (vLLM, AWS Bedrock, Azure OpenAI) without rewriting application code. This prevents vendor lock-in and enables hybrid cloud deployments.
+The unified API allows you to switch between different model providers (vLLM, AWS Bedrock, Azure OpenAI) without rewriting application code. This helps to address vendor lock-in across hybrid cloud deployments.
 
 **Enterprise-grade operations**::
 Running on OpenShift provides automated deployment, scaling, monitoring, and security features. The LlamaStack operator manages the lifecycle of your AI infrastructure using Kubernetes-native patterns.
@@ -155,6 +155,20 @@ This lab uses the `starter` distribution with vLLM as the primary inference prov
 
 Your cluster and namespace have a Custom Resource Definition (CRD) available for the Kind *LlamaStackDistribution* therefore you can create your own instance of a Llama Stack Server. 
 
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+oc api-resources | awk 'NR==1 || $1 ~ /llama/ {print $5 "\t" $4}'
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+KIND    NAMESPACED
+        LlamaStackOperator
+LlamaStackDistribution  true
+----
+
 First git clone a copy of the project files
 
 [.console-input]
@@ -188,6 +202,15 @@ You can review here the setup we use for LiteMaaS as a vLLM endpoint:
 ----
 oc get configmap llama-stack-config -o yaml
 ----
+
+You can review the models available on the LiteMaaS using the following command:
+
+[.console-input]
+[source,yaml,role="copypaste",subs=attributes+]
+----
+curl -sS {litellm_api_base_url}/models   -H "Authorization: Bearer {litellm_virtual_key}" | jq
+----
+
 
 Review the Llama Stack Server manifest below and apply by copy and paste the command in the terminal in order to install a LlamaStack Distribution for vLLM using Model-as-a-Service (LiteMaaS):
 
