@@ -178,6 +178,31 @@ Update your .env with the 3 values from LangFuse
 
 Note: LANGFUSE_BASE_URL is now *LANGFUSE_HOST*
 
+Terminal 1
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+cd backend
+python 6-langgraph-langfuse-fastapi.py
+----
+
+Terminal 2
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+curl -X POST http://localhost:8002/chat \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": "who does Thomas Hardy work for?",
+    "user_id": "test-user",
+    "session_id": "test-session-123"
+}'
+----
+
+
+
 
 
 
