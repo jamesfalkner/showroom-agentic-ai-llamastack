@@ -1,7 +1,22 @@
-= Shields
-
+= Shields with Llama Stack
 
 == Setup
+
+Make sure you are in the correct directory
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+cd $HOME/fantaco-redhat-one-2026/
+pwd
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+/home/lab-user/fantaco-redhat-one-2026
+----
+
 
 If needed, create a Python virtual environment (venv) 
 
@@ -9,8 +24,17 @@ If needed, create a Python virtual environment (venv)
 [source,bash,role="copypaste",subs=attributes+]
 ----
 python -m venv .venv
+----
+
+Set environment
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
 source .venv/bin/activate 
 ----
+
+Change to the correct sub-directory
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]

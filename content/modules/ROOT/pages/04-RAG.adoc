@@ -21,6 +21,20 @@ Llama Stack provides native RAG support through its **Agent API** with the
 5. **Generation**: The LLM uses retrieved context to generate answers,
    citing sources
 
+Make sure you are in the correct directory
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+cd $HOME/fantaco-redhat-one-2026/
+pwd
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+/home/lab-user/fantaco-redhat-one-2026
+----
 
 Create a Python virtual environment (venv)
 
@@ -28,8 +42,17 @@ Create a Python virtual environment (venv)
 [source,bash,role="copypaste",subs=attributes+]
 ----
 python -m venv .venv
+----
+
+Set environment
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
 source .venv/bin/activate 
 ----
+
+Change to the correct sub-directory
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -80,6 +103,8 @@ Set env variables to use *granite*
 export EMBEDDING_MODEL=granite-embedding-125m
 export EMBEDDING_DIMENSION=768
 ----
+
+Create the vector store.  This will take approximately 1 minute. 
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]

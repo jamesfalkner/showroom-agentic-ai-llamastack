@@ -1,4 +1,4 @@
-= Building agents with MCP tools
+= MCP
 
 In the previous module, you deployed MCP servers and registered them with LlamaStack using curl commands. While curl is useful for testing connectivity, building real agents requires a more sophisticated approach. This module demonstrates how to programmatically interact with LlamaStack and MCP tools using Python - the primary language for AI application development.
 
@@ -26,6 +26,54 @@ Best for: Building autonomous agents that reason about tool usage
 - Agent handles tool selection, parameter extraction, and result synthesis
 
 This module demonstrates both patterns so you can choose the right approach for your use case.  
+
+== Setup
+
+Make sure you are in the correct directory
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+cd $HOME/fantaco-redhat-one-2026/
+pwd
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+/home/lab-user/fantaco-redhat-one-2026
+----
+
+If needed, create a Python virtual environment (venv) 
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python -m venv .venv
+----
+
+Set environment
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+source .venv/bin/activate 
+----
+
+Change to the correct sub-directory
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+cd simple-agent-langgraph/
+pwd
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+/home/lab-user/fantaco-redhat-one-2026/simple-agent-langgraph/
+----
 
 == Python Setup
 
@@ -55,27 +103,16 @@ pip -V
 pip 23.2.1 from /usr/lib/python3.12/site-packages/pip (python 3.12)
 ----
 
-Create a Python virtual environment. 
-
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
-python -m venv .venv
-----
-
-Move to the correct directory
-
-[.console-input]
-[source,bash,role="copypaste",subs=attributes+]
-----
-cd simple-agent-langgraph/
-pwd
+which python
 ----
 
 [.console-output]
 [source,bash,subs=attributes+]
 ----
-/home/lab-user/fantaco-redhat-one-2026
+~/fantaco-redhat-one-2026/.venv/bin/python
 ----
 
 Install dependencies 

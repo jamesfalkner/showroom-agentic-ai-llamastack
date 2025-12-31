@@ -195,6 +195,23 @@ The backend system consists of two REST APIs, one for Customer and one for Finan
 
 image::architecture_diagram.png[]
 
+Make sure you are in the correct directory
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+cd $HOME/fantaco-redhat-one-2026/
+pwd
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+/home/lab-user/fantaco-redhat-one-2026
+----
+
+Install the enterprise backend databases and REST APIs
+
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----

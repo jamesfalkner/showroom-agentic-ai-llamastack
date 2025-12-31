@@ -1,0 +1,67 @@
+= Evals with LlamaStack
+
+Llama Stack includes first-class evaluation (Evals) capabilities. Evals in Llama Stack are dataset-driven and integrate directly with agents, tools, and models, enabling teams to measure correctness, safety, and behavior across real workflows—not isolated prompts. By supporting golden answers, deterministic scoring, and LLM-as-judge patterns, Llama Stack makes evaluations repeatable, automatable, and CI/CD-friendly, so teams can confidently test changes to prompts, tools, models, or agent logic before deploying to production. 
+
+Any change to one of the following can have a major impact on the behaviors and responses of an AI-infused application:
+model vendor
+model version 
+model parameter count
+model quantization
+server vendor (e.g. vLLM vs Ollama)
+server configuration
+prompts
+and of course the application code 
+
+Therefore having an automated way to perform automated evals is mission critical to the ongoing care and feeding of an agent or any LLM-wrapping application. 
+
+For this module, we are going to focus on how to setup and execute model evals - tests that you run against different candidate models 
+
+Make sure you are in the correct directory
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+cd $HOME/fantaco-redhat-one-2026/
+pwd
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+/home/lab-user/fantaco-redhat-one-2026
+----
+
+If needed, create a Python virtual environment (venv)
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python -m venv .venv
+----
+
+Set environment
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+source .venv/bin/activate 
+----
+
+Change to the correct sub-directory
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+cd evals-llama-stack
+----
+
+Install the dependencies
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+pip install -r requirements.txt
+----
+
+
+
