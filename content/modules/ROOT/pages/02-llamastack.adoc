@@ -158,14 +158,14 @@ Your cluster and namespace have a Custom Resource Definition (CRD) available for
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
-oc api-resources | awk 'NR==1 || $1 ~ /llama/ {print $5 "\t" $4}'
+ oc api-resources | awk 'NR==1 || $1 ~ /llama/ {print $5 "\t" $4}' | column -t
 ----
 
 [.console-output]
 [source,bash,subs=attributes+]
 ----
-KIND    NAMESPACED
-        LlamaStackOperator
+KIND                    NAMESPACED
+LlamaStackOperator      
 LlamaStackDistribution  true
 ----
 

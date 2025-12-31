@@ -349,12 +349,5 @@ Deleting 1 vector store(s)...
 Done!
 ----
 
-That completes your fun with RAG.  Navigate back to the main directory to begin the next module.
-
-[.console-input]
-[source,bash,role="copypaste",subs=attributes+]
-----
-cd ..
-----
 
 

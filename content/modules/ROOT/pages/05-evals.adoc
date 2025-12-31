@@ -3,18 +3,21 @@
 Llama Stack includes first-class evaluation (Evals) capabilities. Evals in Llama Stack are dataset-driven and integrate directly with agents, tools, and models, enabling teams to measure correctness, safety, and behavior across real workflows—not isolated prompts. By supporting golden answers, deterministic scoring, and LLM-as-judge patterns, Llama Stack makes evaluations repeatable, automatable, and CI/CD-friendly, so teams can confidently test changes to prompts, tools, models, or agent logic before deploying to production. 
 
 Any change to one of the following can have a major impact on the behaviors and responses of an AI-infused application:
-model vendor
-model version 
-model parameter count
-model quantization
-server vendor (e.g. vLLM vs Ollama)
-server configuration
-prompts
-and of course the application code 
 
-Therefore having an automated way to perform automated evals is mission critical to the ongoing care and feeding of an agent or any LLM-wrapping application. 
+* model vendor (e.g. Llama, Qwen, Mistral)
+* model version (e.g. 2.5, 3)
+* model parameter count (e.g. 7B, 14B)
+* model quantization (e.g. q4_K_M, fp16)
+* model server vendor (e.g. vLLM vs Ollama)
+* model server configuration (e.g. tool-call-parser, chat-template)
+* prompts
+* and of course the application code (e.g. .py, .js, .ts, .java)
+
+Therefore having an automated way to perform evals is mission critical to the ongoing care and feeding of your model candidates to support an agent or any LLM-wrapping application. 
 
 For this module, we are going to focus on how to setup and execute model evals - tests that you run against different candidate models 
+
+== Setup
 
 Make sure you are in the correct directory
 
@@ -63,6 +66,485 @@ Install the dependencies
 pip install -r requirements.txt
 ----
 
+== Objects & APIs
+
+The Llama Stack Evals capabilities involves the following objects/APIs:
+
+* DataSets
+* Scoring Functions
+* Benchmarks
+* Evals 
+* Jobs 
+
+First see if the appropriate providers are configured on your Llama Stack Server instance
+
+=== APIs and providers
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python 1_list_eval_related_providers.py
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+Connecting to Llama Stack server at: http://llamastack-distribution-vllm-service:8321
+Fetching available providers...
+Found 2 Dataset provider(s):
+
+  Provider ID: huggingface
+    Type: remote::huggingface
+    API: datasetio
+
+  Provider ID: localfs
+    Type: inline::localfs
+    API: datasetio
+
+Found 1 Eval provider(s):
+
+  Provider ID: meta-reference
+    Type: inline::meta-reference
+    API: eval
+
+Found 2 Scoring provider(s):
+
+  Provider ID: basic
+    Type: inline::basic
+    API: scoring
+
+  Provider ID: llm-as-judge
+    Type: inline::llm-as-judge
+    API: scoring
+----
+
+=== Datasets
+
+Any datasets registered?
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+curl -s -H "Authorization: Bearer notapplicable" $LLAMA_STACK_BASE_URL/v1/datasets | jq
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+{
+  "data": []
+}
+----
+
+Register a Dataset based on a CSV file.  
+
+The CSV file is located at link:https://github.com/burrsutter/fantaco-redhat-one-2026/blob/main/evals-llama-stack/datasets/basic-subset-of-evals.csv[GitHub^]
+
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python 2_register_dataset_basic_subset_of.py
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+Connecting to Llama Stack server at: http://llamastack-distribution-vllm-service:8321
+Registering dataset: basic-subset-of-evals
+Using dataset provider: localfs
+Registered dataset: basic-subset-of-evals
+----
+
+List the registered datasets
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python 3_list_datasets.py
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+Connecting to Llama Stack server at: http://llamastack-distribution-vllm-service:8321
+Fetching available datasets...
+Found 1 dataset(s):
+
+  Dataset ID: basic-subset-of-evals
+    Provider: localfs
+    Source: https://raw.githubusercontent.com/burrsutter/fantaco-redhat-one-2026/main/evals-llama-stack/datasets/basic-subset-of-evals.csv
+
+----
+
+
+=== Scoring Functions
+
+List the scoring functions available
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python 4_list_scoring_functions.py
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+Connecting to Llama Stack server at: http://llamastack-distribution-vllm-service:8321
+Fetching available scoring functions...
+Found 8 scoring function(s):
+
+  Scoring Function ID: basic::equality
+    Provider: basic
+    Description: Returns 1.0 if the input is equal to the target, 0.0 otherwise.
+
+  Scoring Function ID: basic::subset_of
+    Provider: basic
+    Description: Returns 1.0 if the expected is included in generated, 0.0 otherwise.
+
+  Scoring Function ID: basic::regex_parser_multiple_choice_answer
+    Provider: basic
+    Description: Extract answer from response matching Answer: [the_answer_letter], and compare with expected result
+
+  Scoring Function ID: basic::regex_parser_math_response
+    Provider: basic
+    Description: For math related benchmarks, extract answer from the generated response and expected_answer and see if they match
+
+  Scoring Function ID: basic::ifeval
+    Provider: basic
+    Description: Eval intruction follow capacity by checkping how many instructions can be followed in each example
+
+  Scoring Function ID: basic::docvqa
+    Provider: basic
+    Description: DocVQA Visual Question & Answer scoring function
+
+  Scoring Function ID: llm-as-judge::base
+    Provider: llm-as-judge
+    Description: Llm As Judge Scoring Function
+
+  Scoring Function ID: llm-as-judge::405b-simpleqa
+    Provider: llm-as-judge
+    Description: Llm As Judge Scoring Function for SimpleQA Benchmark (https://github.com/openai/simple-evals/blob/main/simpleqa_eval.py)
+----
+
+=== Benchmarks
+
+List the benchmarks available
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python 4_list_benchmarks.py
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+Connecting to Llama Stack server at: http://llamastack-distribution-vllm-service:8321
+Fetching available benchmarks...
+No benchmarks found
+----
+
+Register a benchmark
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python 5_register_benchmark.py
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+Connecting to Llama Stack server at: http://llamastack-distribution-vllm-service:8321
+Registering benchmark: my-basic-quality-benchmark
+Benchmark registered successfully
+----
+
+List benchmarks
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python 4_list_benchmarks.py
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+Connecting to Llama Stack server at: http://llamastack-distribution-vllm-service:8321
+Fetching available benchmarks...
+Found 1 benchmark(s):
+
+  Benchmark ID: my-basic-quality-benchmark
+    Dataset: basic-subset-of-evals
+    Scoring Functions: ['basic::subset_of']
+    Provider: meta-reference
+----
+
+=== Evals
+
+Now that you have a dataset, scoring function and benchmark you are ready to execute your eval.   Before you execute an eval it is important to know what models are available to you as one will be your CANDIDATE_MODEL.
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python 6_list_models.py
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+Connecting to Llama Stack server at: http://llamastack-distribution-vllm-service:8321
+Fetching available models...
+Found 7 model(s):
+
+  Model ID: granite-embedding-125m
+    Type: embedding
+    Provider: sentence-transformers
+    Metadata: {'embedding_dimension': 768.0}
+
+  Model ID: sentence-transformers/nomic-ai/nomic-embed-text-v1.5
+    Type: embedding
+    Provider: sentence-transformers
+    Metadata: {'embedding_dimension': 768.0, 'default_configured': True}
+
+  Model ID: vllm/qwen3-14b-gaudi
+    Type: llm
+    Provider: vllm
+
+  Model ID: vllm/nomic-embed-text-v1-5
+    Type: llm
+    Provider: vllm
+
+  Model ID: vllm/Llama-Guard-3-1B
+    Type: llm
+    Provider: vllm
+
+  Model ID: vllm/qwen25-7b-instruct
+    Type: llm
+    Provider: vllm
+
+  Model ID: vllm/llama-scout-17b
+    Type: llm
+    Provider: vllm
+----
+
+
+Execute the eval
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python 7_execute_eval.py
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+Connecting to Llama Stack server at: http://llamastack-distribution-vllm-service:8321
+Running eval for benchmark: my-basic-quality-benchmark
+Using candidate model: vllm/qwen3-14b-gaudi
+Eval job started: 0
+----
+
+Make note of the *Eval job started: 0*.  That number is significant and will be needed to reveal the results of the eval job. Set an env var called *LLAMA_STACK_JOB_ID* accordingly.
+
+You can also get a listing of the current benchmarks 
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+curl -s "$LLAMA_STACK_BASE_URL/v1/eval/benchmarks" | jq
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+{
+  "data": [
+    {
+      "identifier": "my-basic-quality-benchmark",
+      "provider_resource_id": "my-basic-quality-benchmark",
+      "provider_id": "meta-reference",
+      "type": "benchmark",
+      "dataset_id": "basic-subset-of-evals",
+      "scoring_functions": [
+        "basic::subset_of"
+      ],
+      "metadata": {}
+    }
+  ]
+}
+----
+
+There is no API to ask for the list of all jobs but you can guess at the number if you happened to forget it and check the status
+
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+curl -s "$LLAMA_STACK_BASE_URL/v1/eval/benchmarks/my-basic-quality-benchmark/jobs/0" | jq
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+{
+  "job_id": "0",
+  "status": "completed"
+}
+----
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+LLAMA_STACK_JOB_ID=0 python 8_review_eval_job.py 
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+Connecting to Llama Stack server at: http://llamastack-distribution-vllm-service:8321
+Fetching eval job result: benchmark=my-basic-quality-benchmark job_id=0
+Scores:
+  Scoring Function: basic::subset_of
+  Aggregated: {'accuracy': {'accuracy': 1.0, 'num_correct': 3.0, 'num_total': 3}}
+  Rows: 3
+   Row 1: {'score': 1.0} | Generation: {'generated_answer': '<think>\nOkay, the user asked "What is 2+2?" That\'s a straightforward math question. Let me think. In basic arithmetic, 2 plus 2 equals 4. But maybe they want more than that? Let me check if there\'s any context I\'m missing. They didn\'t specify any'}
+   Row 2: {'score': 1.0} | Generation: {'generated_answer': '<think>\nOkay, the user is asking, "What color is the sky?" Hmm, that seems straightforward, but I need to make sure I cover all the bases. Let\'s start with the basics. On a clear day, the sky is usually blue. But wait, why blue? I remember something about Rayleigh'}
+   Row 3: {'score': 1.0} | Generation: {'generated_answer': "<think>\nOkay, so the user is asking who wrote Romeo and Juliet. Let me think. I know that Shakespeare is the most famous author associated with that play. But wait, I should make sure I'm not missing any details. Let me recall: Romeo and Juliet is one of the most well-known tragedies by William"}
+----
+
+The *basic::subset_of* is looking for the answer within the response string from the model.  
+
+A more sophisticated way to review and judge the response string from a model is to use the LLM-as-judge pattern.
+
+=== LLM-as-judge
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+export JUDGE_MODEL=vllm/llama-scout-17b
+export CANDIDATE_MODEL=vllm/qwen3-14b-gaudi
+----
+
+The LLM-as-judge example re-uses the dataset from before called *basic-subset-of-evals* but dynamically registers a new scoring function and benchmark
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+DATASET_ID = "basic-subset-of-evals"
+SCORING_FN_ID = "my-llm-as-judge-scoring-fn"
+BENCHMARK_ID = "my-llm-as-judge-benchmark"
+----
+
+Execute *9_llm_as_judge.py*
+
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python 9_llm_as_judge.py 
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+Connecting to Llama Stack server at: http://llamastack-distribution-vllm-service:8321
+Registering scoring function: my-llm-as-judge-scoring-fn
+Using judge model: vllm/llama-scout-17b
+Using candidate model: vllm/qwen3-14b-gaudi
+Scoring function 'my-llm-as-judge-scoring-fn' registered successfully
+Benchmark 'my-llm-as-judge-benchmark' registered successfully
+Eval job started: 1
+
+================================================================================
+EVALUATION RESULTS
+================================================================================
+
+--- Evaluation 1 ---
+Generated Answer: 
+
+2 + 2 equals **4**. 
+
+This is a basic arithmetic operation where adding two units to another two units results in four units. Let me know if you'd like further clarification! 😊
+Score: None
+Judge Feedback:
+I would give this response a score of 5 out of 5 for quality and accuracy. Here's why:
+
+**Accuracy: 5/5**
+The generated answer is mathematically correct: 2 + 2 indeed equals 4.
+
+**Quality: 5/5**
+The response exceeds the expected answer in several ways:
+
+1. **Confirmation of correctness**: The generated answer reiterates the correct calculation, providing reassurance.
+2. **Explanation**: The response provides a brief, clear explanation of the arithmetic operation, which helps to demonstrate understanding and provide context.
+3. **Additional support**: The offer to provide further clarification shows a willingness to help and support the user, which is a valuable aspect of a high-quality response.
+4. **Tone and presentation**: The use of a friendly tone (😊) and clear formatting (**4**) make the response engaging and easy to read.
+
+Overall, the generated response is not only accurate but also provides a clear, helpful, and well-presented answer that demonstrates a good understanding of the question and the user's needs.
+
+--- Evaluation 2 ---
+Generated Answer: 
+
+The color of the sky depends on several factors, including the time of day, weather conditions, and atmospheric composition. Here's a breakdown:
+
+1. **Daytime (Midday):**  
+   The sky typically appe...
+Score: None
+Judge Feedback:
+**Score: 5**
+
+The generated response is of exceptional quality and accuracy for several reasons:
+
+1. **Comprehensive Coverage**: The response thoroughly addresses the question by explaining that the color of the sky is not static but depends on various factors such as time of day, weather conditions, and atmospheric composition. It covers multiple scenarios, including daytime, sunrise/sunset, cloudy or stormy weather, night, and other specific contexts like the Moon and high altitudes.
+
+2. **Scientific Accuracy**: The explanation is scientifically accurate, particularly in discussing Rayleigh scattering as the reason the sky appears blue during the day. It also correctly explains the changes in sky color during sunrise/sunset and the effects of clouds and atmospheric conditions.
+
+3. **Clarity and Detail**: The response is clear, well-organized, and detailed. It uses specific examples and straightforward language to explain complex phenomena, making it easy to understand for a wide range of readers.
+
+4. **Engagement**: The use of emojis (e.g., 🌅) adds a touch of engagement and modern communication style, making the response more appealing to readers.
+
+5. **Contextualization**: By providing a nuanced view that considers different conditions and locations, the response contextualizes the answer, showing that the color of the sky can vary greatly.
+
+Overall, the response demonstrates a deep understanding of the topic, presents information in an accessible way, and fully addresses the question's implications, earning it a perfect score.
+
+--- Evaluation 3 ---
+Generated Answer: 
+
+**Romeo and Juliet** was written by **William Shakespeare**, one of the most renowned playwrights in English literature. The play is believed to have been composed around **1596–1597** and first per...
+Score: None
+Judge Feedback:
+**Score: 5**
+
+The generated response is of exceptionally high quality and accuracy. Here's why:
+
+1. **Direct and Clear Answer**: The response directly states that William Shakespeare wrote Romeo and Juliet, which matches the expected answer.
+
+2. **Additional Contextual Information**: The response provides additional valuable context about the play, including:
+   - The approximate composition date (1596-1597).
+   - The first performance by the Lord Chamberlain's Men.
+   - The publication details (quarto form in 1597 and inclusion in the First Folio of 1623).
+
+3. **Source Material and Influences**: It discusses the source material that Shakespeare used, including:
+   - Arthur Brooke's 1562 poem "The Tragical History of Romeus and Juliet".
+   - 16th-century Italian tales by Matteo Bandello and Masuccio Salernitano.
+
+4. **Analysis of Shakespeare's Contribution**: The response highlights how Shakespeare adapted the story into a dramatic tragedy, emphasizing themes that have made it an enduring work in world literature.
+
+5. **Clarity and Structure**: The information is presented clearly and structured logically, making it easy to follow. The use of a "Key Context" section helps to organize the additional information.
+
+6. **Accuracy**: The response is accurate in its details, citing specific dates, sources, and historical context related to the play and its author.
+
+Overall, the response not only answers the question accurately but also provides a rich context that enhances understanding of the play and its significance. This makes it an exemplary response worthy of a score of 5.
+
+================================================================================
+Total evaluations: 3
+================================================================================
+----
 
 
 
