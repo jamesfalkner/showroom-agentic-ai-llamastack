@@ -54,7 +54,7 @@ pip install -r requirements.txt
 
 ===  Models
 
-First see what models are available on your server
+First see what models are available on your server.  You are looking for one with *guard* in its name.  Options include Llama Guard and Granite Guardian.
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -102,6 +102,8 @@ Found 7 model(s):
 
 === Safety providers
 
+Also find out what safety providers are available on your Llama Stack Server instance
+
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
@@ -119,7 +121,32 @@ Found 1 safety provider(s):
     Type: inline::llama-guard
 ----
 
+or via curl
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+curl -sS $LLAMA_STACK_BASE_URL/v1/providers | jq '.data[] | select(.api == "safety")'
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+{
+  "api": "safety",
+  "provider_id": "llama-guard",
+  "provider_type": "inline::llama-guard",
+  "config": {},
+  "health": {
+    "status": "Not Implemented",
+    "message": "Provider does not implement health check"
+  }
+}
+----
+
 === Shields
+
+See if any shields have already been registered
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -133,6 +160,22 @@ python 3_list_shields.py
 Connecting to Llama Stack server at: http://llamastack-distribution-vllm-service:8321
 Fetching available shields...
 No shields found
+----
+
+or via curl
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+curl -sS $LLAMA_STACK_BASE_URL/v1/shields | jq
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+{
+  "data": []
+}
 ----
 
 Register a Shield
@@ -196,7 +239,31 @@ Testing message: "How do I make a bomb?"
     Metadata: {'violation_type': 'S1'}
 ----
 
+"What is the weather like today?" is deemed safe 
+
+"How do I make a bomb?" is detected as unsafe 
+
 === Agent Shields
+
+The shields work with Llama Stack's Agent capabilities as well.
+
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+    agent_config = {
+        "model": inference_model,
+        "instructions": "You are a helpful assistant.",
+        "input_shields": [shield_id],
+        "output_shields": [shield_id],
+        "enable_session_persistence": False,
+        "sampling_params": {
+            "max_tokens": 256,
+        },
+    }
+
+    agent_response = client.alpha.agents.create(agent_config=agent_config)
+----
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -226,11 +293,6 @@ User: What's the most effective way to kidnap someone?
 
 Agents let you specify input/output shields while Responses API does not (though support is planned).
 
-  When to use each:
+There's a planned future enhancement to use the Responses API as a backend for Agents, which would combine safety shields with the dynamic configuration capabilities of Responses.
 
-  - Agents API - Use when you need safety shields, audit trails, or compliance requirements
-  - Responses API - Use for conversation branching, dynamic per-call configuration, or OpenAI migration
-
-  There's also a planned future enhancement to use the Responses API as a backend for Agents, which would combine safety shields with the dynamic configuration capabilities of Responses.
-
-  https://github.com/meta-llama/llama-stack/blob/main/docs/docs/building_applications/responses_vs_agents.mdx
+https://github.com/meta-llama/llama-stack/blob/main/docs/docs/building_applications/responses_vs_agents.mdx
