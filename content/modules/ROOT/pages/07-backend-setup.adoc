@@ -182,8 +182,7 @@ In this lab, 2 MCP servers expose business capabilities to LlamaStack agents:
 **Finance tools** (via Finance MCP Server)::
 * `fetch_order_history`: Get order history with date filtering and pagination
 * `fetch_invoice_history`: Get invoice history with date filtering and pagination
-* `start_duplicate_charge_dispute`: Create disputes for billing issues
-* `find_lost_receipt`: Locate or regenerate receipts
+
 
 Agents invoke these tools naturally through LlamaStack's tool runtime without knowing about the underlying APIs, databases, or implementation details. The MCP servers handle all the complexity of translating tool calls into business operations.
 
@@ -581,12 +580,6 @@ Description: Get order history for a customer.
 
 Tool: fetch_invoice_history
 Description: Get invoice history for a customer.
-
-Tool: start_duplicate_charge_dispute
-Description: Start a duplicate charge dispute.
-
-Tool: find_lost_receipt
-Description: Find or regenerate a lost receipt.
 ----
 
 == Summary

@@ -288,40 +288,9 @@ Returns:
     - data: List of invoice objects with details (id, invoiceNumber, orderId, customerId, amount, status, invoiceDate, dueDate, paidDate, etc.)
     - count: Number of invoices returned
 --------------------------------------------------
-Tool Name:    start_duplicate_charge_dispute
-Description:  Start a duplicate charge dispute.
 
-Creates a new dispute for a duplicate charge issue reported by a customer.
 
-Args:
-    customer_id: Unique identifier for the customer (e.g., "CUST-12345")
-    order_id: Unique identifier for the order (e.g., 12345)
-    description: Detailed description of the duplicate charge issue (e.g., "I was charged twice for the same order on 2024-01-15")
-    reason: Optional reason code for the dispute (e.g., "DUPLICATE_PAYMENT")
-
-Returns:
-    Dictionary containing:
-    - success: Boolean indicating if the request was successful
-    - message: Description of the result
-    - data: Dispute object with details (id, disputeNumber, orderId, customerId, disputeType, status, description, reason, disputeDate, createdAt, updatedAt)
---------------------------------------------------
-Tool Name:    find_lost_receipt
-Description:  Find or regenerate a lost receipt.
-
-Attempts to find an existing receipt or creates a new one for a lost receipt request.
-
-Args:
-    customer_id: Unique identifier for the customer (e.g., "CUST-12345")
-    order_id: Unique identifier for the order (e.g., 12345)
-
-Returns:
-    Dictionary containing:
-    - success: Boolean indicating if the request was successful
-    - message: Description of the result
-    - data: Receipt object with details (id, receiptNumber, orderId, customerId, status, filePath, fileName, fileSize, mimeType, receiptDate, createdAt, updatedAt)
---------------------------------------------------
-
-Total tools: 4
+Total tools: 2
 ==================================================
 ----
 

@@ -282,7 +282,7 @@ INFO:     Waiting for application startup.
 2026-01-01 17:47:18,376 - mcp.client.streamable_http - INFO - Negotiated protocol version: 2025-06-18
 2026-01-01 17:47:18,522 - mcp.client.streamable_http - INFO - Received session ID: 6d9eee0561334c05833355a3f9ac75e7
 2026-01-01 17:47:18,524 - mcp.client.streamable_http - INFO - Negotiated protocol version: 2025-06-18
-2026-01-01 17:47:18,599 - __main__ - INFO - MCP clients initialized. Available tools: ['search_customers', 'get_customer', 'fetch_order_history', 'fetch_invoice_history', 'start_duplicate_charge_dispute', 'find_lost_receipt']
+2026-01-01 17:47:18,599 - __main__ - INFO - MCP clients initialized. Available tools: ['search_customers', 'get_customer', 'fetch_order_history', 'fetch_invoice_history']
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8002 (Press CTRL+C to quit)
 ----
