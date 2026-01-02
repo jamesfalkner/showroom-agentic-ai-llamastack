@@ -1,4 +1,4 @@
-= Traces
+= Traces, Evals and Feedback
 
 Agents are applications and need the appropriate infrastructure to run them at with scale.  Many of the vital capabilities such as load-balancing and fail-over across replicas, capturing logs and metrics and automatic restart are part of OpenShift.
 
@@ -10,7 +10,8 @@ However, Agents do have some unique aspects that require additional infrastructu
 
 The open source solution for these capabilities is in *Langfuse*.  
 
-In this module, we will focus on traces.  Traces are mission critical for debugging, production support and for the intial capture of end-user intent and subsequent creation of evals.
+Traces are mission critical for debugging, production support and for the intial capture of end-user intent and subsequent creation of evals.
+Feedback is vital to incrementally improving the quality of your agent over time. 
 
 == Langfuse Setup by Cluster Admin
 
@@ -272,3 +273,34 @@ Find the traces inside of Langfuse
 image::langfuse-thomas-hardy.png[]
 
 image::langfuse-fran-wilson.png[]
+
+== Evals
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+curl -X POST http://localhost:8002/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "run_name": "after-prompt-update",
+    "sync_dataset": true,
+    "record_to_langfuse": true
+  }'
+----
+
+
+image::langfuse-scores-1.png[]
+
+image::langfuse-fran-wilson-delivered-orders-1.png[]
+
+== Feedback
+
+image::feedback-1.png[]
+
+image::langfuse-scores-feedback-comment-1.png[]
+
+image::langfuse-scores-feedback-comment-2.png[]
+
+
+
+
