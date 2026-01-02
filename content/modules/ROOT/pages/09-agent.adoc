@@ -1,8 +1,10 @@
 = Agent
 
-The agent includes a web-based chat user interface frontend based on Node and a Python-based backend. 
+You should have completed the modules called *Backend Setup* and *MCP* before attempting this module.  
 
-There is a helm chart to deploy both the frontend and backend
+This module focuses on the deployment of a backend and frontend - a web-based chat user interface frontend based on Node and a Python-based backend. 
+
+There is a helm chart to deploy both the frontend and backend to keep things simple.
 
 == Agent with Chat UI
 
@@ -63,7 +65,7 @@ showroom-5648bddc9f-tf6bv                      3/3     Running   0          7h22
 simple-agent-chat-ui-6d7794dc6b-zk95v          1/1     Running   0          72s
 ----
 
-A LangGraph Fast API backend as well as a chat UI.  
+A LangGraph Fast API backend as well as a chat UI as the two new pods. 
 
 Get the URL to the Chat UI
 
@@ -80,14 +82,13 @@ echo $CHAT_URL
 http://simple-agent-chat-ui-showroom-nn2ct-1-user1.apps.cluster-nn2ct.dynamic.redhatworkshops.io
 ----
 
-And open in your browser.
+And open in a new browser tab.
 
 You can also view the whole architecture deployed in your namespace via the OpenShift Developer Console Topology view
 
 image::topology.png[]
 
-
-Now you can ask it agent questions such as 
+Now you can ask it questions interactively such as:
 
 [.console-input]
 [source,text,role="copypaste",subs=attributes+]
@@ -102,7 +103,6 @@ image::chat_ui_1.png[]
 ----
 The tools available to me are designed for managing customer data, order history, invoices, and related tasks. They do not include functionality for retrieving general knowledge facts like the capital of Italy. You'll need to consult a geography resource or a general knowledge database for that information.
 ----
-
 
 
 Try questions specific to the domain of the Agent thanks to the previously deployed and registered Customer and Finance MCP servers
@@ -124,15 +124,7 @@ In Terminal 1, check the logs of your Llama Stack instance to see what's going o
 oc logs -f deploy/llamastack-distribution-vllm
 ----
 
-
-Keep running queries to see traffic going from the agent to the MCP servers and the LLM through Llama Stack.
-
-
-[.console-input]
-[source,text,role="copypaste",subs=attributes+]
-----
-Find all orders for thomashardy@example.com
-----
+Execute several other queries that combine customer and order data.
 
 [.console-input]
 [source,text,role="copypaste",subs=attributes+]
@@ -145,8 +137,12 @@ image::chat_ui_3.png[]
 [.console-input]
 [source,text,role="copypaste",subs=attributes+]
 ----
-What is the status of order 6 for customer LONEP?
+What is the status of order 6 for Fran Wilson?
 ----
+
+image::chat_ui_4.png[]
+
+
 
 
 

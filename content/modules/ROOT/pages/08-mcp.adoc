@@ -703,6 +703,102 @@ Here is the order history for customer AROUT:
 Let me know if you'd like to investigate any specific order or need further assistance!
 ----
 
+
+=== LangGraph Client: Customer + Finance
+
+The real power is seen when combining a natural language query that works across BOTH the customer and finance tools. 
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+Find all orders for franwilson@example.com
+----
+
+Where the use of the contact email address first requires a search of the customers to find the correct customer id which is then used to retrieve the orders from the finance tool.
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python 6_langgraph_client_list_orders_for_franwilson.py
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+Base URL: http://localhost:8321
+Model:    vllm/qwen3-14b-gaudi
+Testing LLM connectivity...
+LLM connectivity OK
+
+==================================================
+Finding orders for: franwilson@example.com
+==================================================
+
+==================================================
+CUSTOMER INFORMATION
+==================================================
+
+Customer ID:   LONEP
+Company Name:  Lonesome Pine Restaurant
+Contact Name:  Fran Wilson
+Contact Email: franwilson@example.com
+==================================================
+
+==================================================
+ORDER HISTORY
+==================================================
+
+Order #1:
+  Order ID:     2
+  Order Number: ORD-002
+  Order Date:   2024-01-20T14:15:00
+  Status:       SHIPPED
+  Total Amount: $149.5
+
+Order #2:
+  Order ID:     1
+  Order Number: ORD-001
+  Order Date:   2024-01-15T10:30:00
+  Status:       DELIVERED
+  Total Amount: $299.99
+
+Order #3:
+  Order ID:     6
+  Order Number: ORD-006
+  Order Date:   2024-01-05T08:30:00
+  Status:       DELIVERED
+  Total Amount: $399.99
+
+==================================================
+Total Orders: 3
+==================================================
+
+
+Assistant:
+
+Here are all the orders for Fran Wilson (LONEP):
+
+1. **Order #ORD-001**
+   - Date: January 15, 2024
+   - Status: DELIVERED
+   - Total: $299.99
+
+2. **Order #ORD-006**
+   - Date: January 5, 2024
+   - Status: DELIVERED
+   - Total: $399.99
+
+3. **Order #ORD-002**
+   - Date: January 20, 2024
+   - Status: SHIPPED
+   - Total: $149.50
+
+Let me know if you need details about a specific order!
+----
+
+
+
+
 The LangGraph examples demonstrate autonomous agent behavior. Notice the key differences from direct tool invocation:
 
 **Agent reasoning**::
