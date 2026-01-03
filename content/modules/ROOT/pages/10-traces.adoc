@@ -272,7 +272,11 @@ Export the appropriate Langfuse env variables
 export LANGFUSE_PUBLIC_KEY=pk-lf-xxx
 export LANGFUSE_SECRET_KEY=sk-lf-xxx
 export LANGFUSE_HOST=https://cloud.langfuse.com
+----
 
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
 # LangGraph and LLama Stack configuration
 export API_KEY=not-applicable
 export INFERENCE_MODEL=vllm/qwen3-14b-gaudi
@@ -386,31 +390,135 @@ Would you like details about any specific order or invoice history?
 
 Find the traces inside of Langfuse
 
-
 image::langfuse-thomas-hardy.png[]
 
 image::langfuse-fran-wilson.png[]
+
+
+Open a Route to the GUI 
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+./create-showroom-8002-route.sh
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+Creating Service and Route for port 8002...
+Host will be: https://showroom-8002-showroom-kw8j5-1-user1.apps.cluster-kw8j5.dynamic.redhatworkshops.io
+service/showroom-8002 unchanged
+route.route.openshift.io/showroom-8002 created
+----
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+export CHAT_TRACES_URL="https://$(oc get route showroom-8002 -o jsonpath='{.spec.host}')"
+echo $CHAT_TRACES_URL
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+https://showroom-8002-showroom-kw8j5-1-user1.apps.cluster-kw8j5.dynamic.redhatworkshops.io
+----
+
+image:langfuse-chat-ui-1.png[]
+
+image:langfuse-liu-wong-1.png[]
 
 == Evals
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
-curl -X POST http://localhost:8002/evaluate \
+curl -sS -X POST http://localhost:8002/evaluate \
   -H "Content-Type: application/json" \
   -d '{
     "run_name": "after-prompt-update",
     "sync_dataset": true,
     "record_to_langfuse": true
-  }'
+  }' | jq .
 ----
 
+[.console-output]
+[source,bash,subs=attributes+]
+----
+{
+  "run_name": "after-prompt-update",
+  "timestamp": "2026-01-03T22:52:48.068633",
+  "dataset_name": "customer-service-eval",
+  "total_tests": 3,
+  "passed": 3,
+  "failed": 0,
+  "pass_rate": 1.0,
+  "average_score": 1.0,
+  "duration_ms": 42144.819498062134,
+  "results": [
+    {
+      "test_id": "thomas-hardy-company-job",
+      "test_name": "Thomas Hardy Company and Job Query",
+      "passed": true,
+      "score": 1.0,
+      "response": "\n\nThomas Hardy works for **Around the Horn** and his job title is **Sales Representative**. \n\nLet me know if you need additional details!",
+      "trace_id": "ccbdd39f31ad0046995c2df51872d7ea",
+      "matched_keywords": [
+        "Around the Horn",
+        "Sales Representative"
+      ],
+      "missing_keywords": [],
+      "details": "Matched 2/2 keywords",
+      "duration_ms": 8468.608140945435
+    },
+    {
+      "test_id": "lonesome-pine-contact",
+      "test_name": "Lonesome Pine Contact Query",
+      "passed": true,
+      "score": 1.0,
+      "response": "\n\nThe primary contact for **Lonesome Pine Restaurant** is **Fran Wilson**, the Sales Manager. Here’s how to reach them:\n\n- **Phone:** (503) 555-9573  \n- **Email:** franwilson@example.com  \n\nLet me know if you need additional details!",
+      "trace_id": "ccbdd39f31ad0046995c2df51872d7ea",
+      "matched_keywords": [
+        "Fran Wilson",
+        "(503) 555-9573",
+        "franwilson@example.com"
+      ],
+      "missing_keywords": [],
+      "details": "Matched 3/3 keywords",
+      "duration_ms": 10165.385484695435
+    },
+    {
+      "test_id": "fran-wilson-delivered-orders",
+      "test_name": "Fran Wilson Delivered Orders Query",
+      "passed": true,
+      "score": 1.0,
+      "response": "\n\nHere are the delivered orders for Fran Wilson (LONEP):\n\n1. **Order #ORD-001**  \n   - Date: January 15, 2024  \n   - Total: $299.99  \n\n2. **Order #ORD-006**  \n   - Date: January 5, 2024  \n   - Total: $399.99  \n\n**Total delivered orders:** 2  \n*(Note: One additional order, ORD-002, is marked as \"SHIPPED\" but not yet delivered.)*  \n\nLet me know if you need further details!",
+      "trace_id": "ccbdd39f31ad0046995c2df51872d7ea",
+      "matched_keywords": [
+        "ORD-001",
+        "$299.99",
+        "ORD-006",
+        "$399.99"
+      ],
+      "missing_keywords": [],
+      "details": "Matched 4/4 keywords",
+      "duration_ms": 23384.660720825195
+    }
+  ]
+}
+----
+
+image:langfuse-datasets-1.png[]
 
 image::langfuse-scores-1.png[]
 
 image::langfuse-fran-wilson-delivered-orders-1.png[]
 
+
+
 == Feedback
+
 
 image::feedback-1.png[]
 
