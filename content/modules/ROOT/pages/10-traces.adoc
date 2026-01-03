@@ -230,7 +230,7 @@ image::langfuse-sign-up-6.png[]
 
 Click on *API Keys* 
 
-image::sign-up-7.png[]
+image::langfuse-sign-up-7.png[]
 
 Click on *+ Create new API Keys*
 
