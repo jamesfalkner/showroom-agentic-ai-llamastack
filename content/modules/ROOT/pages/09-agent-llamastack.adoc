@@ -564,6 +564,7 @@ You: quit
 Goodbye!
 ----
 
+
 == Conclusion
 
 Throughout this module, you've progressed from building simple "Hello World" agents to creating
@@ -576,7 +577,6 @@ agents can now intelligently query databases, retrieve order histories, and chai
 sources together—all while maintaining conversational context and providing natural language
 responses. These patterns and techniques form the foundation for building enterprise-grade AI
 agents that can assist customer service teams, automate business workflows, and enhance
-decision-making across your organization. In the next module, we'll explore an alternative agent
-framework—LangGraph—which offers a different approach to building complex, stateful agent
-systems with explicit control flow and graph-based orchestration.
+decision-making across your organization. In the next module, we'll explore a LangGraph+FastAPI 
+with Chat UI example.
 

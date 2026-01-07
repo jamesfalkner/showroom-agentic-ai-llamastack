@@ -50,6 +50,8 @@ Check that you have set key env variables
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
+export LLAMA_STACK_BASE_URL=http://llamastack-distribution-vllm-service:8321
+export INFERENCE_MODEL=vllm/qwen3-14b
 echo "LLAMA_STACK_BASE_URL="$LLAMA_STACK_BASE_URL
 echo "INFERENCE_MODEL="$INFERENCE_MODEL
 ----
@@ -60,6 +62,8 @@ echo "INFERENCE_MODEL="$INFERENCE_MODEL
 LLAMA_STACK_BASE_URL=http://llamastack-distribution-vllm-service:8321
 INFERENCE_MODEL=vllm/qwen3-14b
 ----
+
+
 
 If needed, create a Python virtual environment (venv) 
 
@@ -83,6 +87,20 @@ The following response indicates you need to create your Python venv
 [source,bash,subs=attributes+]
 ----
 ls: cannot access '.venv': No such file or directory
+----
+
+and 
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+echo $VIRTUAL_ENV
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+/home/lab-user/fantaco-redhat-one-2026/.venv
 ----
 
 Set environment
@@ -218,6 +236,9 @@ CUSTOMER_MCP_SERVER_URL: https://mcp-customer-route-default.apps.cluster-frcqw.d
 null
 HTTP Status: 200
 ----
+
+
+Note: If you feel that your registration failed, perhaps the wrong URL, then there Python and shell scripts to help you unregister the tool.
 
 See that the new toolgroup is registered
 
@@ -951,9 +972,159 @@ Let me know if you need details about a specific order!
 ----
 
 
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python 7_langgraph_client_list_orders_any_customer.py liuwong@example.com
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+Base URL: http://llamastack-distribution-vllm-service:8321
+Model:    vllm/qwen3-14b
+Testing LLM connectivity...
+LLM connectivity OK
+
+==================================================
+Finding orders for: liuwong@example.com
+==================================================
+
+==================================================
+CUSTOMER INFORMATION
+==================================================
+
+Customer ID:   THECR
+Company Name:  The Cracker Box
+Contact Name:  Liu Wong
+Contact Email: liuwong@example.com
+==================================================
+
+==================================================
+ORDER HISTORY
+==================================================
+
+Order #1:
+  Order ID:     7
+  Order Number: ORD-007
+  Order Date:   2024-01-28T13:45:00
+  Status:       SHIPPED
+  Total Amount: $129.99
+
+Order #2:
+  Order ID:     5
+  Order Number: ORD-005
+  Order Date:   2024-01-22T11:10:00
+  Status:       CANCELLED
+  Total Amount: $79.99
+
+==================================================
+Total Orders: 2
+==================================================
 
 
-The LangGraph examples demonstrate autonomous agent behavior. Notice the key differences from direct tool invocation:
+Assistant: 
+
+Here are the orders for liuwong@example.com (customer ID THECR):
+
+1. **Order #ORD-007**  
+   - Date: January 28, 2024  
+   - Status: ✅ SHIPPED  
+   - Total: $129.99  
+
+2. **Order #ORD-005**  
+   - Date: January 22, 2024  
+   - Status: ❌ CANCELLED  
+   - Total: $79.99  
+
+Let me know if you need details about a specific order!
+----
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python 8_langgraph_client_list_invoices_any_customer.py liuwong@example.com
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+Base URL: http://llamastack-distribution-vllm-service:8321
+Model:    vllm/qwen3-14b
+Testing LLM connectivity...
+LLM connectivity OK
+
+==================================================
+Finding invoices for: liuwong@example.com
+==================================================
+
+==================================================
+CUSTOMER INFORMATION
+==================================================
+
+Customer ID:   THECR
+Company Name:  The Cracker Box
+Contact Name:  Liu Wong
+Contact Email: liuwong@example.com
+==================================================
+
+==================================================
+INVOICE HISTORY
+==================================================
+
+Invoice #1:
+  Invoice ID:     7
+  Invoice Number: INV-007
+  Invoice Date:   2024-01-28T13:50:00
+  Status:         SENT
+  Total Amount:   $129.99
+
+Invoice #2:
+  Invoice ID:     5
+  Invoice Number: INV-005
+  Invoice Date:   2024-01-22T11:15:00
+  Status:         CANCELLED
+  Total Amount:   $79.99
+
+==================================================
+Total Invoices: 2
+==================================================
+
+
+Assistant: 
+
+Here are the invoices for Liu Wong (The Cracker Box):
+
+**Invoice History for THECR (The Cracker Box):**
+1. **Invoice #INV-007**
+   - Status: SENT
+   - Amount: $129.99
+   - Invoice Date: Jan 28, 2024
+   - Due Date: Feb 28, 2024
+   - No payment date recorded
+
+2. **Invoice #INV-005**
+   - Status: CANCELLED
+   - Amount: $79.99
+   - Invoice Date: Jan 22, 2024
+   - Due Date: Feb 22, 2024
+   - No payment date recorded
+
+Would you like me to check details about the cancelled invoice or look up any other information?
+----
+
+The data comes from the Postgres databases behind the REST APIs behind the MCP Servers.  If you would like to know which customers have orders or invoices you can go look in the following file:
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+ls /home/lab-user/fantaco-redhat-one-2026/fantaco-finance-main/src/main/resources/data.sql
+----
+
+The LangGraph examples demonstrate agentic behavior and offers a different approach to building more complex, stateful agent
+systems with explicit control flow via graph-based orchestration.
+
+Notice the key differences from direct tool invocation:
 
 **Agent reasoning**::
 The agent analyzes the user's request, determines which tools to use, plans the response format, and synthesizes a natural language answer.
@@ -971,7 +1142,7 @@ This is the power of agentic AI - the LLM acts as an intelligent coordinator tha
 
 == Summary
 
-In this module, you explored 2 approaches to building agents with MCP tools:
+In this module, you explored 2 approaches to interacting with MCP tools:
 
 **Approach 1: Llama Stack Client (direct invocation)**::
 - Programmatic tool invocation where your code controls the workflow
@@ -995,7 +1166,8 @@ In this module, you explored 2 approaches to building agents with MCP tools:
 **What you built**::
 - Python scripts that discover and inspect MCP tools
 - Direct tool invocation using Llama Stack Client
-- Autonomous agents using LangGraph that reason about customer and finance queries
-- Full integration: User input → LangGraph → Llama Stack → MCP Server → Backend API → Database
+- Agents using LangGraph that reason about customer and finance queries
 
-You've now demonstrated complete end-to-end connectivity from natural language input through agent reasoning, tool invocation, MCP servers, backend APIs, and databases. In the final module, you'll deploy a complete agent application with a web-based chat interface that combines all these capabilities. 
+You've now demonstrated complete end-to-end connectivity from natural language input through agent reasoning, tool invocation, MCP servers, backend APIs, and databases. 
+
+In the next module, you will dive into Llama Stack's native agent capabilities. 
