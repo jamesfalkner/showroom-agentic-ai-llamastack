@@ -18,7 +18,7 @@ This exploration will help you understand the Llama Stack API landscape and prep
 [source,bash,role="copypaste",subs=attributes+]
 ----
 export LLAMA_STACK_BASE_URL=http://llamastack-distribution-vllm-service:8321
-export INFERENCE_MODEL=vllm/qwen3-14b-gaudi
+export INFERENCE_MODEL=vllm/qwen3-14b
 ----
 
 [.console-input]
@@ -32,10 +32,10 @@ echo "INFERENCE_MODEL="$INFERENCE_MODEL
 [source,bash,subs=attributes+]
 ----
 LLAMA_STACK_BASE_URL=http://llamastack-distribution-vllm-service:8321
-INFERENCE_MODEL=vllm/qwen3-14b-gaudi
+INFERENCE_MODEL=vllm/qwen3-14b
 ----
 
-The Llama Stack server is accessible via its internal Kubernetes service URL on port 8321. The `INFERENCE_MODEL` variable specifies which model to use for inference requests - in this lab, we're using the Qwen3-14B model optimized for Intel Gaudi accelerators.
+The Llama Stack server is accessible via its internal Kubernetes service URL on port 8321. The `INFERENCE_MODEL` variable specifies which model to use for inference requests - in this lab, we're are primarily using the Qwen3-14B model.
 
 == Discovering available resources
 
@@ -53,16 +53,16 @@ curl -sS $LLAMA_STACK_BASE_URL/v1/models \
 ----
 granite-embedding-125m
 sentence-transformers/nomic-ai/nomic-embed-text-v1.5
-vllm/qwen3-14b-gaudi
 vllm/Llama-Guard-3-1B
 vllm/nomic-embed-text-v1-5
-vllm/qwen25-7b-instruct
+vllm/qwen3-14b
+vllm/granite-4-0-h-tiny
 vllm/llama-scout-17b
 ----
 
 Note: Your list of models may vary depending on what is available on the MaaS
 
-Your Llama Stack distribution provides access to multiple models. The local vLLM-hosted model (`vllm/qwen3-14b-gaudi`) runs directly on your OpenShift cluster, while the Bedrock models can be accessed through AWS when configured. The embedding model enables vector search and RAG capabilities.
+The Llama Stack distribution provides access to multiple vLLM-hosted models (e.g. `qwen3-14b`, `llama-scout-17b`) running on a Red Hat OpenShift AI cluster dedicated to model hosting via MaaS (model-as-a-service) architecture. 
 
 === List APIs
 
@@ -225,11 +225,13 @@ This comprehensive API surface demonstrates Llama Stack's capabilities across th
 
 == Inference APIs
 
-Llama Stack provides multiple inference APIs to suit different application needs. Let's explore two primary approaches to getting responses from language models.
+Llama Stack provides multiple inference APIs to suit different application needs. Let's explore two primary approaches to getting an answer from large language models.
 
-=== ChatCompletion API
+=== ChatCompletions API
 
-The ChatCompletion API provides an OpenAI-compatible interface for conversational interactions. This API is familiar to developers who have worked with OpenAI's GPT models and supports streaming, function calling, and multi-turn conversations.
+The ChatCompletions API provides an OpenAI-compatible interface for interactions. This API is familiar to developers who have worked with OpenAI's GPT models and supports streaming, function calling, and multi-turn conversations.
+
+
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -237,12 +239,21 @@ The ChatCompletion API provides an OpenAI-compatible interface for conversationa
 export QUESTION="what model are you?"
 ----
 
+API_KEY is required for an OpenAI compatible API such as `v1/chat/completions` as well as `v1/responses` and since we are using Llama Stack with vLLM, self-hosted, private models, it can be set to any string you like as it is not applicable. 
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+export API_KEY="not-applicable"
+----
+
+
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
 curl -sS $LLAMA_STACK_BASE_URL/v1/chat/completions \
     -H "Content-Type: application/json" \
-    -H "Authorization: Bearer fake" \
+    -H "Authorization: Bearer $API_KEY" \
     -d "{
        \"model\": \"$INFERENCE_MODEL\",
        \"messages\": [{\"role\": \"user\", \"content\": \"$QUESTION\"}],
@@ -256,27 +267,11 @@ curl -sS $LLAMA_STACK_BASE_URL/v1/chat/completions \
 I am Qwen, a large language model developed by Alibaba Cloud. I can answer questions, create text, and assist with various tasks. How can I help you today?
 ----
 
-=== Response API
+=== Responses API
 
-The **Response API** (`/v1/responses`) is a key differentiator of Llama Stack and represents a more streamlined, purpose-built interface for AI applications. Unlike the ChatCompletion API which focuses on conversational patterns, the Response API is designed for modern agentic workflows where you need direct, structured interaction with language models.
+An OpenAI-compatible **Responses API** (`/v1/responses`) was developed by OpenAI and is also available via Llama Stack. It represents a more streamlined, purpose-built interface for AI applications. Unlike the ChatCompletions API which focuses on conversational patterns, the Responses API is designed for modern agentic workflows where you need direct, structured interaction with language models.  Responses is considered to be the successor of the historical ChatCompletions API. 
 
-==== Why the Response API matters
-
-The Response API is significant because it:
-
-**Simplifies the interface**::
-Instead of managing complex message arrays and conversation history, you provide direct input and receive structured output. This makes it ideal for single-turn interactions, function calling, and tool-augmented generation.
-
-**Supports native Llama Stack features**::
-The Response API is the native interface for Llama Stack's advanced capabilities including safety shields, structured outputs, and multi-step agent reasoning. It's designed specifically for the Llama Stack ecosystem rather than being a compatibility layer.
-
-**Enables agentic patterns**::
-Modern AI applications often need to break complex tasks into steps, invoke tools, and synthesize results. The Response API's design makes it natural to build these patterns, as you'll see in later modules when we build agents.
-
-**Provides consistent semantics**::
-The Response API maintains consistent behavior across different model providers (vLLM, Bedrock, Fireworks). This abstraction allows you to switch backends without changing application code.
-
-.Response API workflow
+.Responses API workflow
 [mermaid,width=100%]
 ----
 sequenceDiagram
@@ -298,25 +293,26 @@ sequenceDiagram
     Note over App,Tools: Response API handles orchestration,<br/>safety, and tool execution
 ----
 
-==== Llama Stack's Response API support
+==== Llama Stack's Responses API support
 
-Llama Stack provides first-class support for the Response API across its entire distribution ecosystem. Whether you're using vLLM for local inference, AWS Bedrock for managed models, or Fireworks AI for hosted endpoints, the Response API maintains consistent semantics and behavior.
-
-Key features of Llama Stack's Response API implementation:
+Key features of Llama Stack's Responses API implementation:
 
 * **Provider abstraction**: Same API works with any configured inference provider
-* **Automatic safety**: Integrated with Llama Stack's safety shields and content moderation
-* **Structured outputs**: Native support for JSON schemas and structured data extraction
+* **Structured outputs**: Native support for JSON schemas, structured data extraction and structured input/output
 * **Tool integration**: Built-in support for RAG, web search, and custom tools
 * **Observability**: Request/response logging and monitoring through OpenAPI endpoints
 
-Let's interact with the Response API:
+Let's interact with the Responses API:
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
 export QUESTION="What is the capital of Italy?"
+----
 
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
 curl -sS "$LLAMA_STACK_BASE_URL/v1/responses" \
     -H "Content-Type: application/json" \
     -H "Authorization: Bearer $API_KEY" \
@@ -332,9 +328,9 @@ curl -sS "$LLAMA_STACK_BASE_URL/v1/responses" \
 The capital of Italy is **Rome**. It is a historic city known for its rich cultural heritage, ancient landmarks like the Colosseum and Vatican City, and its role as the political and administrative center of the country.
 ----
 
-The Response API provides a clean, direct interface for getting model responses. Notice the simplified request structure compared to ChatCompletion - you specify a `model` and `input` rather than managing message arrays. The response is structured as an array of output content, making it easy to extract text, handle tool calls, or process structured data.
+The Responses API provides a clean, direct interface for getting model responses. Notice the simplified request structure compared to ChatCompletion - you specify a `model` and `input` rather than managing message arrays. The response is structured as an array of output content, making it easy to extract text, handle tool calls, or process structured data.
 
-This API becomes even more powerful when combined with Llama Stack's agent framework, which uses the Response API as the foundation for multi-step reasoning and tool execution.
+This API becomes even more powerful when combined with Llama Stack's agent framework, which uses the Responses API as the foundation for multi-step reasoning and tool execution.
 
 == Tool runtime and capabilities
 
@@ -392,9 +388,9 @@ In this module, you explored the Llama Stack API landscape through hands-on inte
 
 * **Connected to Llama Stack** and discovered available models across local and cloud providers
 * **Explored the API surface** with over 100 endpoints for inference, agents, RAG, safety, and tools
-* **Compared inference approaches** between ChatCompletion and Response APIs
-* **Emphasized the Response API** as Llama Stack's native interface for agentic workflows, with provider abstraction, safety integration, and simplified semantics
-* **Discovered tool capabilities** including web search and RAG runtime
+* **Compared inference approaches** between ChatCompletion and Responses APIs
+* **Emphasized the Responses API** as Llama Stack's native interface for agentic workflows, with provider abstraction, and simplified semantics
+* **Discovered tool capabilities** for RAG 
 
-The Response API's design philosophy - direct input/output, provider abstraction, and native support for Llama Stack features - makes it the foundation for building sophisticated AI agents. In the following modules, you'll use these APIs to implement RAG, integrate tools via MCP, and build complete agentic applications.
+In the following modules, you'll use these APIs to implement RAG, integrate tools via MCP, and build complete agentic applications.
 

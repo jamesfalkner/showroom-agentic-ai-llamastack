@@ -79,10 +79,6 @@ Found 7 model(s):
     Provider: sentence-transformers
     Metadata: {'embedding_dimension': 768.0, 'default_configured': True}
 
-  Model ID: vllm/qwen3-14b-gaudi
-    Type: llm
-    Provider: vllm
-
   Model ID: vllm/Llama-Guard-3-1B
     Type: llm
     Provider: vllm
@@ -91,7 +87,11 @@ Found 7 model(s):
     Type: llm
     Provider: vllm
 
-  Model ID: vllm/qwen25-7b-instruct
+  Model ID: vllm/qwen3-14b
+    Type: llm
+    Provider: vllm
+
+  Model ID: vllm/granite-4-0-h-tiny
     Type: llm
     Provider: vllm
 
@@ -275,7 +275,7 @@ python 6_agent_shield.py
 [source,bash,subs=attributes+]
 ----
 Connecting to Llama Stack server at: http://llamastack-distribution-vllm-service:8321
-Creating agent with model: vllm/qwen3-14b-gaudi
+Creating agent with model: vllm/qwen3-14b
 Using shield: content_safety
 
 Agent created with ID: 0a2dd715-9c28-4f1d-bde4-d7ec502bc0de

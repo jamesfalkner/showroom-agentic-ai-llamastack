@@ -65,7 +65,7 @@ graph TB
         subgraph LLS["Llama Stack Distribution"]
             AGENT[AI Agent<br/>Multi-turn reasoning]
             API[Llama Stack APIs<br/>Responses, Tools, Agents]
-            VLLM[vLLM Inference<br/>Qwen3-14B-Gaudi]
+            VLLM[vLLM Inference<br/>Qwen3-14B]
         end
     end
 

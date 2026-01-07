@@ -51,8 +51,8 @@ architecture running on OpenShift:
 
 * **Llama Stack Distribution**: The core AI platform providing unified APIs
 for inference, agents, RAG, and tools
-* **vLLM with Intel Gaudi**: High-performance model serving using the Qwen3
-14B model optimized for Gaudi accelerators
+* **vLLM**: High-performance model serving using the Qwen3
+14B model, Llama Scout 17B, Llama Guard 3 1B, etc.
 * **MCP Servers**: Protocol translation layer connecting agents to backend
 systems
 * **Backend Microservices**: PostgreSQL-backed REST APIs providing customer

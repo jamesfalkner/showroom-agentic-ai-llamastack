@@ -3,6 +3,11 @@
 This module walks through an example of using Llama Stack\'s built-in RAG
 capabilities. 
 
+RAG stands for Retrieval Augumented Generation and is a pattern often used to augment the knowledge of a LLM.  Allowing you to bring private data without having to train nor fine-tune a model. 
+
+Typical RAG implementations involve both an ingestion as well as retrieval process.  Some folks refer to these processes as pipleines. 
+
+image::rag_high_level_diagram.png[]
 
 Llama Stack provides native RAG support through its **Agent API** with the
 `file_search` tool:
@@ -60,6 +65,13 @@ Change to the correct sub-directory
 cd rag-llama-stack
 ----
 
+If you did this correctly then your terminal prompt should look like the following:
+
+----
+((.venv) ) [lab-user: ~/fantaco-redhat-one-2026/rag-llama-stack]$
+----
+
+
 Install the dependencies
 
 [.console-input]
@@ -93,7 +105,6 @@ Found 2 embedding model(s):
    ⭐ Default configured
 ----
 
-Create a vector store and ingest the content.  
 
 Set env variables to use *granite*
 
@@ -104,7 +115,9 @@ export EMBEDDING_MODEL=granite-embedding-125m
 export EMBEDDING_DIMENSION=768
 ----
 
-Create the vector store.  This will take approximately 1 minute. 
+Then run the ingestion and vector store creation script.  
+
+This will take approximately 1 minute. 
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -122,27 +135,41 @@ EMBEDDING_DIMENSION: 768
 Initializing Llama Stack client...
 Client initialized successfully
 Creating vector store...
-✓ Vector store created: vs_fd085663-9a63-49f1-bb66-401bf27865ca
+✓ Vector store created: vs_5c464ca9-58dc-4f3d-bda9-d7333e4eb2a1
 Downloading document...
 ✓ Downloaded 11727 characters
-✓ Saved to: /home/lab-user/fantaco-redhat-one-2026/rag-llama-stack\
-/source_docs/FantaCoFabulousHRBenefits_clean.txt
 Uploading document to Llama Stack...
-✓ File uploaded: file-c66eed6f65464296bf46a05437f4362a
+✓ File uploaded: file-7f7cd655e3ff4fd5823098c148176b94
 Attaching file to vector store...
   Chunking: 100 tokens per chunk, 10 token overlap
 ✓ File attached to vector store
 --------------------------------------------------------------------------------
 Checking file processing status...
 Waiting 10 seconds for processing to complete...
-File ID: file-c66eed6f65464296bf46a05437f4362a
+File ID: file-7f7cd655e3ff4fd5823098c148176b94
 Status: completed
 ✓ File processing completed successfully!
 
 Vector store is ready for querying
-Vector store ID: vs_fd085663-9a63-49f1-bb66-401bf27865ca
+Vector store ID: vs_5c464ca9-58dc-4f3d-bda9-d7333e4eb2a1
 --------------------------------------------------------------------------------
 ----
+
+The `1_create_vector_store.py` script:
+
+* Creates a database called "hr-benefits-hybrid" that can search documents using:
+    - Keyword search (finding exact words) - 50% weight
+    - Semantic search (finding similar meaning) - 50% weight
+
+* Downloads the HR Document
+  - Fetches a text file called link:https://raw.githubusercontent.com/burrsutter/fantaco-redhat-one-2026/refs/heads/main/rag-llama-stack/source_docs/FantaCoFabulousHRBenefits_clean.txt[FantaCoFabulousHRBenefits_clean.txt] from GitHub
+  
+* Upload the document to Llama Stack Server
+
+* Chunks the uploaded document
+  - Splits the uploaded document into small pieces (100 tokens each, with 10-token overlap)
+
+* Waits to see if the document has been successfully indexed 
 
 You can list the vector stores that Llama Stack is aware of by using
 curl
@@ -157,7 +184,7 @@ jq -r '.data[] | "\(.name) \(.id)"'
 [.console-output]
 [source,bash,subs=attributes+]
 ----
-hr-benefits-hybrid vs_fd085663-9a63-49f1-bb66-401bf27865ca
+hr-benefits-hybrid vs_5c464ca9-58dc-4f3d-bda9-d7333e4eb2a1
 ----
 
 Or by using Python
@@ -173,17 +200,20 @@ python 2_list_available_vector_stores.py
 ----
 Available Vector Stores:
 --------------------------------------------------------------------------------
-ID: vs_fd085663-9a63-49f1-bb66-401bf27865ca
+ID: vs_5c464ca9-58dc-4f3d-bda9-d7333e4eb2a1
 Name: hr-benefits-hybrid
-Created: 1766611605
+Created: 1767742908
 Files: 1
 --------------------------------------------------------------------------------
 ----
 
-Llama Stack client Agent API and file_search tool
+The RAG pattern typically involves two phases - first you ingest and then you augment the retrieval. 
+You have just completed ingestion therefore what is next is retrieval.
 
-[.console-output]
-[source,python,subs=attributes+]
+
+Here is an example of the retrieval process via Llama Stack client Agent API and file_search tool 
+
+
 ----
 agent = Agent(
     client,
@@ -199,6 +229,7 @@ questions by searching the provided documents.",
 )
 ----
 
+Let's go execute the retrieval process via Python script.
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -211,8 +242,8 @@ To answer the question of *What do I receive when I retire?*
 [.console-output]
 [source,bash,subs=attributes+]
 ----
-Using vector store: vs_fd085663-9a63-49f1-bb66-401bf27865ca
-Using model: vllm/qwen3-14b-gaudi
+Using vector store: vs_5c464ca9-58dc-4f3d-bda9-d7333e4eb2a1
+Using model: vllm/qwen3-14b
 --------------------------------------------------------------------------------
 Query: What do I receive when I retire?
 --------------------------------------------------------------------------------
@@ -245,7 +276,7 @@ python 6_test_unique_terms.py
 [.console-output]
 [source,bash,subs=attributes+]
 ----
-Using vector store: vs_fd085663-9a63-49f1-bb66-401bf27865ca
+Using vector store: vs_5c464ca9-58dc-4f3d-bda9-d7333e4eb2a1
 
 Query: Tell me about the chocolate statue and personal bard
 --------------------------------------------------------------------------------
@@ -323,7 +354,7 @@ Fetching vector stores...
 Found 1 vector store(s):
 --------------------------------------------------------------------------------
 1. Name: hr-benefits-hybrid
-   ID: vs_fd085663-9a63-49f1-bb66-401bf27865ca
+   ID: vs_5c464ca9-58dc-4f3d-bda9-d7333e4eb2a1
    Created: 1766611605
 
 Delete options:
@@ -344,10 +375,11 @@ Delete ALL 1 vector store(s)? (yes/no): yes
 
 Deleting 1 vector store(s)...
 --------------------------------------------------------------------------------
-✓ Deleted: hr-benefits-hybrid (vs_fd085663-9a63-49f1-bb66-401bf27865ca)
+✓ Deleted: hr-benefits-hybrid (vs_5c464ca9-58dc-4f3d-bda9-d7333e4eb2a1)
 
 Done!
 ----
+
 
 
 

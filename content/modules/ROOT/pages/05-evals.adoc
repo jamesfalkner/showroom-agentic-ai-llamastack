@@ -310,7 +310,7 @@ Found 7 model(s):
     Provider: sentence-transformers
     Metadata: {'embedding_dimension': 768.0, 'default_configured': True}
 
-  Model ID: vllm/qwen3-14b-gaudi
+  Model ID: vllm/Llama-Guard-3-1B
     Type: llm
     Provider: vllm
 
@@ -318,11 +318,11 @@ Found 7 model(s):
     Type: llm
     Provider: vllm
 
-  Model ID: vllm/Llama-Guard-3-1B
+  Model ID: vllm/qwen3-14b
     Type: llm
     Provider: vllm
 
-  Model ID: vllm/qwen25-7b-instruct
+  Model ID: vllm/granite-4-0-h-tiny
     Type: llm
     Provider: vllm
 
@@ -345,7 +345,7 @@ python 7_execute_eval.py
 ----
 Connecting to Llama Stack server at: http://llamastack-distribution-vllm-service:8321
 Running eval for benchmark: my-basic-quality-benchmark
-Using candidate model: vllm/qwen3-14b-gaudi
+Using candidate model: vllm/qwen3-14b
 Eval job started: 0
 ----
 
@@ -427,7 +427,7 @@ A more sophisticated way to review and judge the response string from a model is
 [source,bash,role="copypaste",subs=attributes+]
 ----
 export JUDGE_MODEL=vllm/llama-scout-17b
-export CANDIDATE_MODEL=vllm/qwen3-14b-gaudi
+export CANDIDATE_MODEL=vllm/qwen3-14b
 ----
 
 The LLM-as-judge example re-uses the dataset from before called *basic-subset-of-evals* but dynamically registers a new scoring function and benchmark
@@ -455,7 +455,7 @@ python 9_llm_as_judge.py
 Connecting to Llama Stack server at: http://llamastack-distribution-vllm-service:8321
 Registering scoring function: my-llm-as-judge-scoring-fn
 Using judge model: vllm/llama-scout-17b
-Using candidate model: vllm/qwen3-14b-gaudi
+Using candidate model: vllm/qwen3-14b
 Scoring function 'my-llm-as-judge-scoring-fn' registered successfully
 Benchmark 'my-llm-as-judge-benchmark' registered successfully
 Eval job started: 1

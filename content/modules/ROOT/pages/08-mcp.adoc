@@ -510,10 +510,9 @@ This approach is useful when:
 
 === Llama Stack Client: Customer
 
-The key pieces of code to pay attention to in the Llama Stack Client for Customer are creation of the Client 
+The key elements of code to pay attention to in the Llama Stack Client for Customer are creation of the Client 
 
-[.console-output]
-[source,bash,subs=attributes+]
+
 ----
 client = Client(
     base_url=BASE_URL,
@@ -523,8 +522,7 @@ client = Client(
 
 And the invocation of the tool.  
 
-[.console-output]
-[source,bash,subs=attributes+]
+
 ----
         result = client.tool_runtime.invoke_tool(
             tool_name="search_customers",
@@ -542,7 +540,7 @@ python 4_llamastack_client_customer.py
 [source,bash,subs=attributes+]
 ----
 Base URL: http://llamastack-distribution-vllm-service:8321
-Model:    vllm/qwen3-14b-gaudi
+Model:    vllm/qwen3-14b
 
 ==================================================
 Searching for customer: thomashardy@example.com
@@ -588,7 +586,7 @@ python 4_llamastack_client_finance.py
 [source,bash,subs=attributes+]
 ----
 Base URL: http://llamastack-distribution-vllm-service:8321
-Model:    vllm/qwen3-14b-gaudi
+Model:    vllm/qwen3-14b
 
 ==================================================
 Fetching order history for customer: AROUT
@@ -712,8 +710,6 @@ export API_KEY="not-applicable"
 
 The key elements in the code include:
 
-[.console-output]
-[source,bash,subs=attributes+]
 ----
 llm = ChatOpenAI(
     model=INFERENCE_MODEL,
@@ -723,8 +719,6 @@ llm = ChatOpenAI(
 )
 ----
 
-[.console-output]
-[source,bash,subs=attributes+]
 ----
 # MCP tool binding using OpenAI Responses API format
 llm_with_tools = llm.bind(
@@ -738,12 +732,12 @@ llm_with_tools = llm.bind(
     ])
 ----
 
-[.console-output]
-[source,bash,subs=attributes+]
 ----
 response = graph.invoke(
     {"messages": [{"role": "user", "content": "Search for customer with email thomashardy@example.com"}]})
 ----
+
+Execute it 
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -755,7 +749,7 @@ python 5_langgraph_client_customer.py
 [source,bash,subs=attributes+]
 ----
 Base URL: http://localhost:8321
-Model:    vllm/qwen3-14b-gaudi
+Model:    vllm/qwen3-14b
 Testing LLM connectivity...
 LLM connectivity OK
 
@@ -807,7 +801,7 @@ python 5_langgraph_client_finance.py
 [source,bash,subs=attributes+]
 ----
 Base URL: http://localhost:8321
-Model:    vllm/qwen3-14b-gaudi
+Model:    vllm/qwen3-14b
 Testing LLM connectivity...
 LLM connectivity OK
 
@@ -873,8 +867,6 @@ Let me know if you'd like to investigate any specific order or need further assi
 
 The real power is seen when combining a natural language query that works across BOTH the customer and finance tools. 
 
-[.console-output]
-[source,bash,subs=attributes+]
 ----
 Find all orders for franwilson@example.com
 ----
@@ -891,7 +883,7 @@ python 6_langgraph_client_list_orders_for_franwilson.py
 [source,bash,subs=attributes+]
 ----
 Base URL: http://localhost:8321
-Model:    vllm/qwen3-14b-gaudi
+Model:    vllm/qwen3-14b
 Testing LLM connectivity...
 LLM connectivity OK
 

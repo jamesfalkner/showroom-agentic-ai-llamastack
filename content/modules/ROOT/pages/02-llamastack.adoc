@@ -107,7 +107,7 @@ graph TB
         subgraph NS["User Namespace (Project)"]
             subgraph CRD["LlamaStackDistribution CRD"]
                 LLS[Llama Stack Server Pod<br/>Port: 8321<br/>Distribution: starter<br/>Storage: PVC 20Gi]
-                VLLM_SVC[vLLM Service<br/>Model-as-a-Service<br/>Qwen3-14B-Gaudi]
+                VLLM_SVC[vLLM Service<br/>Model-as-a-Service<br/>Qwen3-14B]
 
                 subgraph AGENT["Agent Application"]
                     FRONT[Frontend Pod<br/>Chat UI - Node.js]
@@ -120,7 +120,7 @@ graph TB
 
         subgraph RHAI["Red Hat OpenShift AI 3"]
             SERVE[Model Serving<br/>vLLM]
-            GPU[GPU Acceleration<br/>Intel Gaudi]
+            GPU[GPU Acceleration<br/>Intel Gaudi, Nvidia, etc]
             MLOPS[MLOps Pipelines]
         end
     end
@@ -149,7 +149,7 @@ A distribution defines which providers and capabilities are available in your Ll
 * **Safety**: Content moderation and guardrails
 * **Agent orchestration**: Multi-turn conversations with tool calling
 
-This lab uses the `starter` distribution with vLLM as the primary inference provider, configured to use Intel Gaudi accelerators through OpenShift AI's Model-as-a-Service (MaaS) capability.
+This lab uses the `starter` distribution with vLLM as the primary inference provider, configured to use OpenShift AI's Model-as-a-Service (MaaS) capability.
 
 == Deploying your Llama Stack instance
 
@@ -216,7 +216,7 @@ showroom-proxy-config         1      126m
 showroom-userdata             1      126m
 ----
 
-You can review here the setup we use for LiteMaaS as a vLLM endpoint:
+You can also view the ConfigMap via the `oc` command. 
 
 [.console-input]
 [source,yaml,role="copypaste",subs=attributes+]
@@ -224,7 +224,7 @@ You can review here the setup we use for LiteMaaS as a vLLM endpoint:
 oc get configmap llama-stack-config -o yaml
 ----
 
-You can review the models available on the LiteMaaS using the following command:
+You can review the models available on the MaaS using the following command:
 
 [.console-input]
 [source,yaml,role="copypaste",subs=attributes+]
@@ -233,7 +233,7 @@ curl -sS {litellm_api_base_url}/models   -H "Authorization: Bearer {litellm_virt
 ----
 
 
-Review the Llama Stack Server manifest below and apply by copy and paste the command in the terminal in order to install a Llama Stack Distribution for vLLM using Model-as-a-Service (LiteMaaS):
+Review the Llama Stack Server manifest below and apply by copy and paste the command in the terminal in order to install a Llama Stack Distribution for vLLM using Model-as-a-Service (MaaS):
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
