@@ -8,6 +8,7 @@ This workshop will cover the following topics:
 * RAG
 * Evals
 * Shields
+* Web Search Tool
 * Backend 
 * Model Context Protocol (MCP)
 * Agents - Llama Stack
