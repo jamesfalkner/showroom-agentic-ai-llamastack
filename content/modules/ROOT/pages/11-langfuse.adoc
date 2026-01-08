@@ -625,6 +625,56 @@ image::langfuse-scores-feedback-comment-1.png[]
 
 image::langfuse-scores-feedback-comment-2.png[]
 
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+./list-traces.sh
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+Fetching last 10 traces...
+
+TRACE ID                           QUERY
+=====================================================================================
+bc0008ba64304e09fcc3fbaf9f1f9888   what is today?
+20a4d01e6cf0eb28e15872a5317274a2   who is Burr Sutter?
+1e81a8782d937c8e1adafb994e96681c   what are the delivered orders for Fran Wilson?
+dd4e1cb37e83e51e3d25bd05cc237f16   who is the primary contact for Lonesome Pine ...
+631fc657a05762b86e44551393fb16f1   who does Thomas Hardy work for and what is hi...
+4e4ed7ee062f0d38f0abb6fc03defc3d   what are the orders for Liu Wong?
+017c454bb7fbc01cc5a7a8fe6f0b073b   who does Thomas Hardy work for?
+8fa62c42a85d8f14ba9a42d38359ce53   what are Fran Wilson's orders?
+5ee044f92e94fd50c133f5ac7dc82d96   who does Thomas Hardy work for?
+----
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+./get-trace-feedback.sh bc0008ba64304e09fcc3fbaf9f1f9888
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+./get-trace-feedback.sh bc0008ba64304e09fcc3fbaf9f1f9888
+
+Fetching trace: bc0008ba64304e09fcc3fbaf9f1f9888
+================================================
+Name: customer-service-chat
+Timestamp: 2026-01-08T17:57:16.111Z
+Input: what is today?
+Output:
+
+I don't have access to real-time information or calendar functions. You'll need to check your device's clock or a calendar application for today's date. Let me know if you need help with any custome...
+
+Feedback:
+---------
+  Score: thumbs down (0)
+  Comment: you should have access to a clock~!
+  Time: 2026-01-08T17:57:35.580Z
+----
 
 == Llama Stack integration
 
