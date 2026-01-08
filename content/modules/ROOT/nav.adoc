@@ -6,12 +6,12 @@
 * xref:05-evals.adoc[5. Evals]
 * xref:06-shields.adoc[6. Shields]
 * xref:07-web-search.adoc[7. Web Search Tool]
-* xref:08-backend-setup.adoc[7. Backend Setup]
-* xref:09-mcp.adoc[8. MCP]
-* xref:10-agent-llamastack.adoc[9. Agent - Llama Stack]
-* xref:11-agent-langgraph.adoc[10. Agent - LangGraph]
-* xref:12-langfuse.adoc[11. Langfuse: Traces, Evals, Feedback]
-* xref:13-RHOAI-workbench.adoc[12. RHOAI Workbench]
+* xref:08-backend-setup.adoc[8. Backend Setup]
+* xref:09-mcp.adoc[9. MCP]
+* xref:10-agent-llamastack.adoc[10. Agent - Llama Stack]
+* xref:11-agent-langgraph.adoc[11. Agent - LangGraph]
+* xref:12-langfuse.adoc[12. Langfuse: Traces, Evals, Feedback]
+* xref:13-RHOAI-workbench.adoc[13. RHOAI Workbench]
 
 
 // ** xref:module-01.adoc#repositories[Repositories]
