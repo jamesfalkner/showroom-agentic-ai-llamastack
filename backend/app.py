@@ -184,14 +184,8 @@ config = Config()
 
 
 # Pydantic models
-class ConversationMessage(BaseModel):
-    role: str = Field(..., description="Message role: 'user', 'assistant', or 'system'")
-    content: str = Field(..., description="Message content")
-
-
 class ChatRequest(BaseModel):
     message: str = Field(..., description="Current user message")
-    conversation_history: List[ConversationMessage] = Field(default_factory=list)
     agent_type: Optional[Literal["lab_content", "openshift_debugging", "auto"]] = Field(default="auto", description="Which agent to use")
     include_mcp: bool = Field(default=True, description="Whether to include MCP tools")
     page_context: Optional[str] = Field(default=None, description="Current page context")
@@ -360,7 +354,6 @@ class MultiAgentSystem:
     async def chat(
         self,
         message: str,
-        conversation_history: List[ConversationMessage],
         agent_type: Optional[str] = None,
         include_mcp: bool = True,
         page_context: Optional[str] = None,
@@ -389,7 +382,6 @@ class MultiAgentSystem:
         # Use LlamaStack Responses API
         async for chunk in self._stream_with_responses_api(
             message,
-            conversation_history,
             system_prompt,
             selected_agent,
             include_mcp,
@@ -400,7 +392,6 @@ class MultiAgentSystem:
     async def _stream_with_responses_api(
         self,
         message: str,
-        conversation_history: List[ConversationMessage],
         system_prompt: str,
         agent_type: str,
         include_mcp: bool,
@@ -409,12 +400,10 @@ class MultiAgentSystem:
         """Stream response using LlamaStack Responses API"""
 
         # Log conversation continuity
-        if not conversation_history:
-            logger.info("New conversation detected")
-        elif previous_response_id:
+        if previous_response_id:
             logger.info(f"Continuing conversation with response ID: {previous_response_id}")
         else:
-            logger.warning("Conversation history exists but no previous_response_id provided")
+            logger.info("New conversation detected")
 
         try:
             # Get agent configuration
@@ -672,7 +661,6 @@ async def stream_chat(chat_request: ChatRequest):
 
         async for chunk in agent_system.chat(
             chat_request.message,
-            chat_request.conversation_history,
             chat_request.agent_type,
             chat_request.include_mcp,
             chat_request.page_context,

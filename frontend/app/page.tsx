@@ -224,19 +224,12 @@ export default function ChatPage() {
       setMessages(prev => [...prev, assistantMessage])
       setStreamingMessageId(assistantMessageId)
 
-      // Build conversation history
-      const conversationHistory = messages.map(m => ({
-        role: m.role,
-        content: m.content
-      }))
-
       try {
         const response = await fetch(`${backendUrl}/api/chat/stream`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             message: userMessage.content,
-            conversation_history: conversationHistory,
             agent_type: selectedAgent,
             include_mcp: true,
             page_context: null,
