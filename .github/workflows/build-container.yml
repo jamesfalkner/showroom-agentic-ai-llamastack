@@ -30,6 +30,9 @@ jobs:
       - name: Install Antora
         run: npm install --global @antora/cli@3.1 @antora/site-generator@3.1
 
+      - name: Install Dependencies
+        run: npm install
+
       - name: Build RAG content with Antora
         run: npx antora --extension ai-assistant-build --extension rag-export default-site.yml
 
