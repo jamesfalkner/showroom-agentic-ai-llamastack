@@ -1,6 +1,6 @@
 = Web Search
 
-One of the more powerful out of the box tools is web search and an integration with Tavily.  
+One of the more powerful out of the box tools in Llama Stack is *web search* and an integration with Tavily.  
 
 This means your agent/application can have the latest and greatest information available from Internet sources and not wholly rely on its training data.
 
@@ -71,8 +71,7 @@ grep -A 3 "tavily" llama-stack-scripts/llamastack-configmap.yaml
           max_results: 3   
 ----
 
-And will need an API key to activate.  Sign up at https://www.tavily.com/ and create an API key.
-
+You will need an API key to activate.  Sign up at https://www.tavily.com/ and create an API key.
 
 
 [.console-input]
@@ -81,29 +80,18 @@ And will need an API key to activate.  Sign up at https://www.tavily.com/ and cr
 export TAVILY_SEARCH_API_KEY=tvly-xxxxxxxxx
 ----
 
+and make sure your INFERENCE_MODEL env variable is set correctly
+
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
-oc get LlamaStackDistribution
+echo $INFERENCE_MODEL
 ----
 
 [.console-output]
 [source,bash,subs=attributes+]
 ----
-NAME                           PHASE   OPERATOR VERSION   SERVER VERSION   AVAILABLE   AGE
-llamastack-distribution-vllm   Ready   "0.4.0"            0.3.0rc3+rhai0   1           9m53s
-----
-
-[.console-input]
-[source,bash,role="copypaste",subs=attributes+]
-----
-oc rollout restart deployment llamastack-distribution-vllm
-----
-
-[.console-output]
-[source,bash,subs=attributes+]
-----
-deployment.apps/llamastack-distribution-vllm restarted
+vllm/qwen3-14b
 ----
 
 [.console-input]
@@ -119,6 +107,11 @@ pwd
 /home/lab-user/fantaco-redhat-one-2026/web-search
 ----
 
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+pip install -r requirements.txt
+----
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -145,6 +138,7 @@ Total toolgroups: 2
 ==================================================
 ----
 
+=== Who won the last Super Bowl?
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -155,56 +149,67 @@ python 2_no_web_search.py
 [.console-output]
 [source,bash,subs=attributes+]
 ----
-Base URL: http://localhost:8321
-Model:    vllm/qwen3-14b
+The last Super Bowl, **Super Bowl LVIII**, was played on **February 11, 2024**, at Allegiant Stadium in Las Vegas. The **Kansas City Chiefs** defeated the **San Francisco 49ers** with a final score of **25-22**.
 
-Okay, so I need to figure out who won the last Super Bowl. Let me think. First, I should check when the most recent Super Bowl was held. The Super Bowl is usually played in early February each year. The last one would be Super Bowl LVII, right? Wait, I think the numbering goes up each year, so Super Bowl LVI was in 2022, and LVI was in 2021. Wait, no, the numbering is a bit confusing. Let me recall: Super Bowl 50 was in 2016, then 51 in 2017, so each year increments by one. So in 2023, it would be Super Bowl LVII, which is 57. But I need to confirm the exact year.
-
-Wait, the 2023 Super Bowl was actually played on February 12, 2023, which would be Super Bowl LVII. The teams were the Kansas City Chiefs and the Philadelphia Eagles. The Chiefs won that game, right? They had a strong team with Patrick Mahomes. But wait, I think the Eagles won Super Bowl LII in 2018. Wait, no, maybe I'm mixing up the years. Let me get this straight.
-
-Looking at the past few Super Bowls: Super Bowl LVI was in 2022, with the Los Angeles Rams beating the Cincinnati Bengals. Then Super Bowl LVII in 2023 was the Kansas City Chiefs vs. the Philadelphia Eagles. The Chiefs won that one, 38-35, right? So the last Super Bowl, which was in 2023, was won by the Kansas City Chiefs. But wait, I should check if there's a more recent one. However, since the current year is 2023, and the next Super Bowl is in 2024, so the last one would be 2023. Therefore, the answer is the Kansas City Chiefs.
-
-
-The last Super Bowl, **Super Bowl LVII**, was played on **February 12, 2023**, and was won by the **Kansas City Chiefs**. They defeated the **Philadelphia Eagles** with a score of **38-35**. This victory marked the Chiefs' third Super Bowl title in team history.
+**Patrick Mahomes** of the Chiefs was named **Super Bowl MVP**, leading his team to victory with a strong performance. This marked the Chiefs' second Super Bowl win in three years (following their 2020 victory).
 ----
 
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
-python 3_web_search.py
+QUESTION="Who won the last Super Bowl?" python 3_web_search.py
 ----
 
 [.console-output]
 [source,bash,subs=attributes+]
 ----
-Base URL:   http://localhost:8321
-Model:      vllm/qwen3-14b
 Tavily Key: Set
+Question:   Who won the last Super Bowl?
 
-Okay, the user is asking who won the last Super Bowl. Let me think about how to approach this.
-
-First, I need to determine the most recent Super Bowl. Super Bowls are typically held in February each year, so the "last" one would depend on the current date. Since the current date isn't provided, I should assume the latest one as of the most recent information available up to 2023. The Super Bowl in 2023 was Super Bowl LVII, which took place on February 12, 2023. The Kansas City Chiefs defeated the Philadelphia Eagles with a score of 38-35. Patrick Mahomes was named the MVP.
-
-However, if the user is asking this question after February 2023, the latest Super Bowl would be Super Bowl LVIII in 2024, which was won by the Kansas City Chiefs again, defeating the San Francisco 49ers. But since my knowledge is up to 2023, I might not have that information. Wait, no, the user's question is in the present tense, so maybe they're asking now, in 2023. But the current date isn't specified.
-
-To be safe, I should check the most recent Super Bowl as of the latest data. If the user is asking now, in 2023, the last Super Bowl was LVII. However, if the user is asking after February 2024, the answer would be the Chiefs again. But since I don't have real-time data, I should use the web_search function to get the most up-to-date information.
-
-Alternatively, maybe the user is asking about the most recent one before 2023. Wait, the latest Super Bowl before 2023 was Super Bowl LVI in 2022, won by the Los Angeles Rams. But no, Super Bowl LVII was in 2023.
-
-Hmm, perhaps I should use the web_search function to confirm the latest winner to ensure accuracy, especially since Super Bowl information can be time-sensitive. The user might be asking in 2023 or 2024, and without knowing the exact date, it's better to search for the most recent result.
-
-
-{"query": "Who won the last Super Bowl?"}
-Okay, so the user asked who won the last Super Bowl. Let me check the tool response.
-
-Looking at the first search result from Topend Sports, it says the Philadelphia Eagles won Super Bowl LIX in 2025 by defeating the Kansas City Chiefs 40-22. The second result from CBS News also mentions the Eagles winning 40-22 in 2025. The Wikipedia entry for Super Bowl LVII mentions that the Eagles avenged their loss against the Chiefs in Super Bowl LIX. The ESPN and another Wikipedia link don't have the most recent info, probably because they're older pages.
-
-So, the latest information from the top two results points to the Philadelphia Eagles as the winners of the most recent Super Bowl, which was in 2025. The other sources either confirm this or are outdated. Therefore, the answer should be the Philadelphia Eagles.
-
-
-The Philadelphia Eagles won the most recent Super Bowl (Super Bowl LIX) in 2025, defeating the Kansas City Chiefs with a score of **40-22** in New Orleans. This marked the Eagles' second Super Bowl championship, their first since 2018.
+The Philadelphia Eagles won the most recent Super Bowl (Super Bowl LIX in 2025), defeating the Kansas City Chiefs with a score of **40-22** in New Orleans. This marked the Eagles' second Super Bowl championship and their first since 2018.
 ----
+
+=== Who is the current US President?
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python 2_no_web_search_president.py
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+As of the latest information available (up to July 2024), **Joe Biden** is the 46th President of the United States. His term began on **January 20, 2021**, following the 2020 presidential election. The next U.S. presidential election is scheduled for **November 5, 2024**, with the new president to be inaugurated on **January 20, 2025**.
+
+If you're asking this question after July 2024, the answer may change depending on the election results. Let me know if you'd like updates on the 2024 race!
+----
+
+And now with a web search
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python 3_web_search_president.py
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+The current President of the United States is **Donald John Trump**. He was sworn into office on **January 20, 2025**, and his term is set to end on **January 20, 2029**. This information is consistent across multiple sources, including official government websites and encyclopedic references.
+
+Note: The dates referenced (2025–2029) are in the future relative to the current year (2023), which may indicate a hypothetical or forward-looking context in the search results.
+----
+
+Note: non-deterministic behavior means even with the web search tool this can report that Joe Biden is president.  
+
+So what to do about "The dates referenced (2025–2029) are in the future relative to the current year (2023)"?
+
+Make sure to know your model's knowledge cutoff date
+
+
+=== Knowledge Cutoff Date
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -215,11 +220,54 @@ python 4_what_is_my_knowledge_cutoff.py
 [.console-output]
 [source,bash,subs=attributes+]
 ----
-Base URL: http://localhost:8321
-Model:    vllm/qwen3-14b
-
-Okay, the user is asking about my knowledge cutoff. I need to provide an accurate answer. Let me recall when my training data was last updated. I remember that my knowledge is up to October 2024. Wait, but I should double-check that. Let me think. The cutoff date for my training data is October 2024, which means I can provide information up to that point. However, I should mention that I might not have the latest data beyond that. Also, I should make sure to explain it clearly so the user understands the limitations. Let me structure the response: state the cutoff date, mention that I can't access real-time data, and offer to help with information within that timeframe. That should cover it.
-
-
-My knowledge is up to **October 2024**. This means I can provide information and answer questions based on data and events up to that date. However, I cannot access real-time or post-October 2024 information, including current events, recent developments, or data beyond my training cutoff. Let me know if you'd like assistance with information within this timeframe!
+My knowledge cutoff is **Q3 2024**, meaning my training data includes information up to that time. However, I do **not** have real-time internet access, so I cannot provide updates or information beyond this cutoff. For the most current data, I recommend checking reliable sources directly. Let me know if you'd like help with anything within my training scope!
 ----
+
+=== Today
+
+A key tip to make your search results better is to simply add *Today* to every prompt.
+
+
+----
+today = date.today()
+prompt=f"Today is {today}. Who is the current US President?"
+----
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+python 5_web_search_president_today.py
+----
+
+[.console-output]
+[source,bash,subs=attributes+]
+----
+As of January 8, 2026, the current U.S. President is **Donald Trump**. He secured a second term in the 2024 election, as indicated by multiple sources, including news articles and the official White House website.
+----
+
+=== Responses
+
+You can also use the web search tool via the Responses API
+
+[.console-input]
+[source,bash,role="copypaste",subs=attributes+]
+----
+QUESTION="Who won the last Super Bowl?"
+
+cat << EOF | curl -sS "$LLAMA_STACK_BASE_URL/v1/responses" \
+    -H "Content-Type: application/json" \
+    -H "Authorization: Bearer $API_KEY" \
+    -H "X-LlamaStack-Provider-Data: {\"tavily_search_api_key\": \"$TAVILY_SEARCH_API_KEY\"}" \
+    -d @- | jq -r '.output[] | select(.type == "message") | .content[0].text'
+{
+  "model": "$INFERENCE_MODEL",
+  "input": "$QUESTION",
+  "tools": [{"type": "web_search"}],
+  "stream": false
+}
+EOF
+----
+
+
+
+
