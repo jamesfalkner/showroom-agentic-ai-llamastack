@@ -13,15 +13,7 @@ The open source solution for these capabilities is in *Langfuse*.
 Traces are mission critical for debugging, production support and for the intial capture of end-user intent and subsequent creation of evals.
 Feedback is vital to incrementally improving the quality of your agent over time. 
 
-== Langfuse Setup by Cluster Admin
-
-If you are a student skip to the next section, your instructor should already have completed the following steps.
-
-[.console-input]
-[source,bash,role="copypaste",subs=attributes+]
-----
-oc new-project langfuse
-----
+== Langfuse Setup 
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -44,23 +36,23 @@ S3_ROOT_PASS="$(openssl rand -hex 16)"
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
-oc -n langfuse create secret generic langfuse-general \
+oc create secret generic langfuse-general \
   --from-literal=salt="$LF_SALT"
 
-oc -n langfuse create secret generic langfuse-nextauth-secret \
+oc create secret generic langfuse-nextauth-secret \
   --from-literal=nextauth-secret="$LF_NEXTAUTH_SECRET"
 
-oc -n langfuse create secret generic langfuse-postgresql-auth \
+oc create secret generic langfuse-postgresql-auth \
   --from-literal=password="$PG_PASS" \
   --from-literal=postgres-password="$PG_PASS"
 
-oc -n langfuse create secret generic langfuse-clickhouse-auth \
+oc create secret generic langfuse-clickhouse-auth \
   --from-literal=password="$CH_PASS"
 
-oc -n langfuse create secret generic langfuse-redis-auth \
+oc create secret generic langfuse-redis-auth \
   --from-literal=password="$REDIS_PASS"
 
-oc -n langfuse create secret generic langfuse-s3-auth \
+oc create secret generic langfuse-s3-auth \
   --from-literal=rootUser="root" \
   --from-literal=rootPassword="$S3_ROOT_PASS"
 ----
@@ -69,7 +61,7 @@ oc -n langfuse create secret generic langfuse-s3-auth \
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
-helm install langfuse langfuse/langfuse -n langfuse -f https://raw.githubusercontent.com/burrsutter/fantaco-redhat-one-2026/main/langfuse-setup/values-openshift.yaml
+helm install langfuse langfuse/langfuse -f https://raw.githubusercontent.com/burrsutter/fantaco-redhat-one-2026/main/langfuse-setup/values-openshift.yaml
 ----
 
 [.console-input]
@@ -98,13 +90,13 @@ langfuse-zookeeper-2              1/1     Running   0          139m
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
-oc expose service langfuse-web -n langfuse
+oc expose service langfuse-web
 ----
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
-oc patch route langfuse-web -n langfuse -p '{"spec":{"tls":{"termination":"edge","insecureEdgeTerminationPolicy":"Redirect"}}}'
+oc patch route langfuse-web -p '{"spec":{"tls":{"termination":"edge","insecureEdgeTerminationPolicy":"Redirect"}}}'
 ----
 
 [.console-input]
@@ -167,7 +159,7 @@ Then update the deployment
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
-helm upgrade langfuse langfuse/langfuse -n langfuse -f values-openshift.yaml
+helm upgrade langfuse langfuse/langfuse -f values-openshift.yaml
 ----
 
 [.console-output]
@@ -186,7 +178,7 @@ TEST SUITE: None
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
-oc rollout restart deployment langfuse-web -n langfuse
+oc rollout restart deployment langfuse-web
 ----
 
 [.console-output]
@@ -199,14 +191,11 @@ deployment.apps/langfuse-web restarted
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
-open $LANGFUSE_URL
+echo $LANGFUSE_URL
+echo "Open in a new browser tab"
 ----
 
-
-
-== Langfuse Setup by Students
-
-Ask your instructor for the URL to Langfuse then create the following:
+Based on the URL to the GUI of Langfuse then create the following:
 
 * Account
 * Organization
@@ -226,7 +215,7 @@ Click *New Organization*
 
 image::langfuse-sign-up-2.png[]
 
-Provide an organization name and click *Create*
+Provide an organization name of *my-agent-org* and click *Create*
 
 image::langfuse-sign-up-3.png[]
 
@@ -234,7 +223,7 @@ Click *Next*
 
 image::langfuse-sign-up-4.png[]
 
-Provide a project name and click *Create*
+Provide a project name of *my-agent-project* and click *Create*
 
 image::langfuse-sign-up-5.png[]
 
@@ -250,7 +239,7 @@ Click on *+ Create new API Keys*
 
 image::langfuse-sign-up-8.png[]
 
-Provide a key name and click *Create API keys*
+Provide a key name of *my-key* and click *Create API keys*
 
 image::langfuse-sign-up-9.png[]
 
@@ -284,7 +273,7 @@ Check that you have set key env variables
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
-export LLAMA_STACK_BASE_URL=http://llamastack-distribution-vllm-service:8321
+export LLAMA_STACK_BASE_URL=http://llamastack-distribution-vllm-service.agentic-{user}.svc:8321
 export INFERENCE_MODEL=vllm/qwen3-14b
 echo "LLAMA_STACK_BASE_URL="$LLAMA_STACK_BASE_URL
 echo "INFERENCE_MODEL="$INFERENCE_MODEL
@@ -381,7 +370,6 @@ image::RHOAI-workbench-env-edit-langfuse.png[]
 # LangGraph and LLama Stack configuration
 export API_KEY=not-applicable
 export INFERENCE_MODEL=vllm/qwen3-14b
-export BASE_URL=http://llamastack-distribution-vllm-service:8321/v1
 ----
 
 And double check on your MCP server URLs
