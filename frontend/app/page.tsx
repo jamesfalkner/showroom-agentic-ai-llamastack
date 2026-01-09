@@ -144,7 +144,7 @@ export default function ChatPage() {
   }, [selectedAgent])
 
   // Dynamically construct backend URL based on current hostname
-  // Pattern: <service>-<namespace>.<subdomain> -> showroom-ai-assistant-<namespace>.<subdomain>
+  // Pattern: <anything>.<cluster-domain> -> showroom-ai-assistant-showroom-ai-assistant.<cluster-domain>
   const getBackendUrl = () => {
     if (typeof window === 'undefined') {
       return 'http://localhost:8001' // SSR fallback
@@ -158,13 +158,14 @@ export default function ChatPage() {
     }
 
     // For OpenShift/Kubernetes deployment
-    // Replace service name with 'showroom-ai-assistant' keeping namespace and subdomain
-    // Pattern: <service>-<namespace>.<subdomain> -> showroom-ai-assistant-<namespace>.<subdomain>
-    const parts = hostname.split('-')
-    if (parts.length >= 2) {
-      // Replace first part (service name) with 'showroom-ai-assistant'
-      parts[0] = 'showroom-ai-assistant'
-      const backendHostname = parts.join('-')
+    // Replace everything up to the first dot with 'showroom-ai-assistant-showroom-ai-assistant'
+    // Pattern: <service-namespace>.<cluster-domain> -> showroom-ai-assistant-showroom-ai-assistant.<cluster-domain>
+    const firstDotIndex = hostname.indexOf('.')
+    if (firstDotIndex !== -1) {
+      // Take everything after the first dot (cluster domain)
+      const clusterDomain = hostname.substring(firstDotIndex + 1)
+      // Prepend showroom-ai-assistant-showroom-ai-assistant
+      const backendHostname = `showroom-ai-assistant-showroom-ai-assistant.${clusterDomain}`
       return `${window.location.protocol}//${backendHostname}`
     }
 
