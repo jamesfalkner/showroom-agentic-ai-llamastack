@@ -4,6 +4,10 @@ Langflow is an open-source, visual workflow builder designed to make it easy to 
 
 Langflow dramatically shortens the path from idea to working AI application while still producing production-ready artifacts: flows can be versioned, exported as JSON, executed via APIs, and integrated into real systems. For teams experimenting with RAG, agentic workflows, tool calling, or MCP servers, Langflow provides a shared visual language that aligns developers, architects, and product stakeholders
 
+[TIP]
+====
+*How does Langflow relate to what you've built so far?* In previous modules you wrote Python scripts to create agents, configure tools, and invoke MCP servers. Langflow provides the same capabilities through a visual drag-and-drop interface. The flow you'll build here is functionally equivalent to your Python agents — it connects to the same vLLM models and MCP servers — but makes the architecture visible and easier to iterate on.
+====
 
 Note: This is a fairly advanced exercise as it involves the building of the agent from scratch.
 
@@ -213,6 +217,11 @@ Click **Playground**
 
 image::vllm-custom-component-6.png[vLLM]
 
+[NOTE]
+====
+*Why a custom component?* Langflow includes built-in components for OpenAI and other hosted providers, but vLLM served via MaaS requires a custom API URL, API key, and model name. The custom component wraps these configuration details so that vLLM appears as a native Langflow building block. Once created, it can be reused across any number of flows.
+====
+
 
 == Agent
 
@@ -312,6 +321,11 @@ Keep going, we will work on this behavior in a bit.
 
 image::vllm-agent-11.png[vLLM Agent]
 
+[NOTE]
+====
+*Why did the agent confuse the customer with the author?* Without a system prompt, the agent has no context that "Thomas Hardy" refers to a customer record. The LLM defaults to its training data, which knows Thomas Hardy as a famous English novelist. This demonstrates why *system prompts are essential* for domain-specific agents — you'll fix this behavior later in the module by adding agent instructions.
+====
+
 Add MCP Component for Finance
 
 image::vllm-agent-12.png[vLLM Agent]
@@ -385,6 +399,11 @@ Always use tools first. Never answer from general knowledge about people.
 ----
 
 image::vllm-agent-19.png[vLLM Agent]
+
+[TIP]
+====
+*Anatomy of a good agent system prompt:* This prompt does three things: (1) establishes the agent's role ("customer service assistant"), (2) sets behavioral rules ("ALWAYS search as a customer first", "MUST use tools"), and (3) documents the available tools with their exact parameter names. Listing tool signatures in the prompt helps smaller models call tools correctly — larger models can usually figure it out from the MCP tool descriptions alone.
+====
 
 And now go give your agent another round of tests
 

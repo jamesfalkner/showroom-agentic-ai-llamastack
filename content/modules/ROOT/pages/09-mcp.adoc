@@ -328,6 +328,10 @@ customer_mcp
 finance_mcp
 ----
 
+[TIP]
+====
+*What just happened?* You registered two MCP servers as tool groups with Llama Stack. Llama Stack now knows where to find them and will query them for available tools at runtime. Notice the `provider_id` is `model-context-protocol` -- this tells Llama Stack to use the MCP protocol for tool discovery and invocation, as opposed to built-in tools like `builtin::rag`.
+====
 
 ==== List Customer Tools
 
@@ -605,6 +609,11 @@ CUSTOMER SEARCH RESULT
 }
 ==================================================
 ----
+
+[NOTE]
+====
+*Direct invocation = no LLM involved.* This approach calls the MCP tool directly through `client.tool_runtime.invoke_tool()`. The LLM never sees the request -- your code decides which tool to call and with what parameters. This is useful for testing, scripted workflows, and cases where tool selection is deterministic.
+====
 
 === Llama Stack Client: Finance
 
@@ -990,6 +999,10 @@ Here are all the orders for Fran Wilson (LONEP):
 Let me know if you need details about a specific order!
 ----
 
+[NOTE]
+====
+*Multi-step reasoning in action:* The agent received a single request ("Find all orders for franwilson@example.com") and autonomously executed two tool calls: first `search_customers` to resolve the email to a customer ID (LONEP), then `fetch_order_history` with that ID. The agent planned this sequence on its own -- you didn't have to code the workflow.
+====
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]

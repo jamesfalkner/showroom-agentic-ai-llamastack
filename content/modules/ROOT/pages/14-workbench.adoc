@@ -4,9 +4,12 @@ Another approach to executing the exercises of this workshop is to use the Red H
 
 As the primary audience for this workshop is architects, platform engineers and developers, we will take the Code Server approach as seen in the screenshots.
 
+[TIP]
+====
+*Why use a Workbench?* The Showroom terminals work well for running commands, but a Workbench gives you a full IDE experience inside the cluster — you can browse and edit the Python scripts, set breakpoints, and have multiple files open side-by-side. It's running as a pod in your namespace, so it has the same network access to Llama Stack and MCP services as your other workloads.
+====
 
-
-Open the 
+Open the
 https://data-science-gateway.{openshift_cluster_ingress_domain}[OpenShift AI Console^] as
 
 Username:

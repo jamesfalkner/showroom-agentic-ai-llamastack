@@ -167,6 +167,11 @@ An AI agent is an autonomous system that perceives its environment, processes in
 
 ----
 
+[TIP]
+====
+*Streaming vs non-streaming:* The non-streaming version waits for the complete response before returning. The streaming version (`1_hello_world_agent_streaming.py`) returns tokens as they're generated — the thinking emoji appears while the model processes, then text flows in progressively. Streaming provides a better user experience for interactive applications because users see the response building in real-time.
+====
+
 Run this to discover all registered toolgroups and MCP endpoints available on your Llama Stack server.
 
 [.console-input]
@@ -343,6 +348,11 @@ response = agent.create_turn(
 )
 ----
 
+[TIP]
+====
+*Agents vs direct tool invocation:* Compare this with the Llama Stack Client approach in the previous module. Here, you give the agent a natural language instruction ("tell me about the customer with the email address...") and it decides which tool to call and how to format the results. The agent manages sessions and turns, maintaining context across interactions.
+====
+
 Run the script:
 
 [.console-input]
@@ -494,6 +504,11 @@ Here are the orders for **Around the Horn (AROUT)**:
 There are **3 orders** in total for this customer. Two are still pending, and one has been delivered.
 ----
 
+[NOTE]
+====
+*Notice the context retention:* In Turn 2, the user asks "what are their orders?" — the pronoun "their" refers to Thomas Hardy from Turn 1. The agent resolved this reference because Llama Stack maintains session state across turns. The agent knew to look up orders for customer AROUT without being told the ID again. This is what `session_id` enables.
+====
+
 Run this for an interactive chat experience where you can have a back-and-forth conversation with the agent.
 
 [.console-input]
@@ -515,6 +530,11 @@ Human-in-the-Loop Agent
 Type 'exit' or 'quit' to end the conversation
 ===================
 ----
+
+[TIP]
+====
+*Human-in-the-loop (HITL):* This pattern creates an interactive loop where the agent processes one request at a time and waits for the next human input. Unlike scripted agents that run a fixed set of queries, HITL agents adapt to whatever the user asks in real-time. This is the foundation for production chat interfaces and customer support systems.
+====
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]

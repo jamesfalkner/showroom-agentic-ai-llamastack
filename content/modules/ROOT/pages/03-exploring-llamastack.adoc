@@ -37,6 +37,11 @@ INFERENCE_MODEL=vllm/qwen3-14b
 
 The Llama Stack server is accessible via its internal Kubernetes service URL on port 8321. The `INFERENCE_MODEL` variable specifies which model to use for inference requests - in this lab, we're are primarily using the Qwen3-14B model.
 
+[TIP]
+====
+*Reading the service URL:* `http://llamastack-distribution-vllm-service.agentic-{user}.svc:8321` follows the Kubernetes DNS convention: `<service-name>.<namespace>.svc:<port>`. This means your requests stay inside the cluster network — no external routing or authentication needed.
+====
+
 == Discovering available resources
 
 === List available models
@@ -61,7 +66,12 @@ vllm/llama-scout-17b
 
 Note: Your list of models may vary depending on what is available on the MaaS
 
-The Llama Stack distribution provides access to multiple vLLM-hosted models (e.g. `qwen3-14b`, `llama-scout-17b`) running on a Red Hat OpenShift AI cluster dedicated to model hosting via MaaS (model-as-a-service) architecture. 
+The Llama Stack distribution provides access to multiple vLLM-hosted models (e.g. `qwen3-14b`, `llama-scout-17b`) running on a Red Hat OpenShift AI cluster dedicated to model hosting via MaaS (model-as-a-service) architecture.
+
+[TIP]
+====
+*Model types in the list:* Notice the models fall into two categories. *Embedding* models (like `nomic-embed-text`) convert text into numerical vectors for search and retrieval — you'll use these in the RAG module. *LLM* models (like `qwen3-14b`, `granite-4-0-h-tiny`) are the language models that generate text responses. `Llama-Guard-3-1B` is a specialized safety model used for content moderation.
+====
 
 === List APIs
 
@@ -220,7 +230,12 @@ The ChatCompletions API provides an OpenAI-compatible interface for interactions
 export QUESTION="what model are you?"
 ----
 
-API_KEY is required for an OpenAI compatible API such as `v1/chat/completions` as well as `v1/responses` and since we are using Llama Stack with vLLM, self-hosted, private models, it can be set to any string you like as it is not actually being used. 
+API_KEY is required for an OpenAI compatible API such as `v1/chat/completions` as well as `v1/responses` and since we are using Llama Stack with vLLM, self-hosted, private models, it can be set to any string you like as it is not actually being used.
+
+[TIP]
+====
+*Why `temperature: 0.0`?* The `temperature` parameter controls randomness in model responses. At `0.0`, the model always picks the most likely next token, giving deterministic (reproducible) output. Higher values (e.g. `0.7`) introduce randomness for more creative or varied responses. For testing and evals, `0.0` is useful because you get the same answer every time.
+====
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -278,6 +293,11 @@ and research. My exact model name isn't publicly disclosed. However, I'm designe
 provide accurate, relevant, and helpful information across a wide range of topics.
 ----
 
+
+[NOTE]
+====
+*Provider abstraction in action:* Notice you used the exact same `curl` command and only changed the `INFERENCE_MODEL` environment variable. Llama Stack routed the request to a completely different model behind the scenes. This is the core value of the unified API — your application code doesn't change when you swap models.
+====
 
 Change the `INFERENCE_MODEL` back to Qwen 3 as we will use that for our lab.
 
@@ -376,6 +396,11 @@ curl -sS -H "Content-Type: application/json" $LLAMA_STACK_BASE_URL/v1/toolgroups
   "data": []
 }
 ----
+
+[TIP]
+====
+*Why are tool groups empty?* Llama Stack starts with no tools registered by default. This is intentional — tools are capabilities you explicitly opt into. You register them here so that agents can discover and invoke them during their reasoning process. Think of it as giving your agents permission to use specific external capabilities.
+====
 
 Register the RAG and Web Search tools.
 

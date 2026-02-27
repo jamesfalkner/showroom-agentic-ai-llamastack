@@ -11,6 +11,10 @@ Any change to one of the following can have a major impact on the behaviors and 
 * prompts
 * and of course the application code (e.g. .py, .js, .ts, .java)
 
+[NOTE]
+====
+*Why does this matter?* A model upgrade that improves math reasoning might simultaneously degrade tool-calling accuracy. A quantization change that halves memory usage could introduce subtle factual errors. Without automated evals, teams discover these regressions in production — the most expensive place to find them.
+====
 
 Llama Stack includes first-class evaluation (Evals) capabilities. Evals in Llama Stack are dataset-driven and integrate directly with agents, tools, and models, enabling teams to measure correctness, safety, and behavior across real workflows—not isolated prompts. By supporting golden answers, deterministic scoring, and LLM-as-judge patterns, Llama Stack makes evaluations repeatable, automatable, and CI/CD-friendly, so teams can confidently test changes to prompts, tools, models, or agent logic before deploying to production. 
 
@@ -19,6 +23,8 @@ Therefore having an automated way to perform evals is mission critical to the on
 For this module, we are going to focus on how to setup and execute model evals - tests that you run against different candidate models 
 
 == Setup
+
+The `evals-llama-stack` directory contains a set of numbered Python scripts (`1_list_eval_related_providers.py`, `2_register_dataset_basic_subset_of.py`, etc.) that progressively build up the eval pipeline, plus a `datasets/` folder with CSV test data containing questions and expected answers. You will run these scripts in order.
 
 Make sure you are in the correct directory
 
@@ -119,6 +125,11 @@ Found 2 Scoring provider(s):
     API: scoring
 ----
 
+[TIP]
+====
+*What are providers?* Providers are pluggable backends that implement Llama Stack APIs. For datasets, `localfs` stores data on the local filesystem while `huggingface` pulls from HuggingFace Hub. For scoring, `basic` uses deterministic string-matching (fast, no LLM call needed), while `llm-as-judge` uses a second LLM to grade responses (richer feedback, but slower and more expensive). The `meta-reference` eval provider is Llama Stack's built-in evaluation engine.
+====
+
 === Datasets
 
 Any datasets registered?
@@ -141,6 +152,7 @@ Register a Dataset based on a CSV file.
 
 The CSV file is located at link:https://github.com/burrsutter/fantaco-redhat-one-2026/blob/main/evals-llama-stack/datasets/basic-subset-of-evals.csv[GitHub^]
 
+The dataset contains rows with an `input_query` (the question to ask the model), an `expected_answer` (the "golden answer" to score against), and a `chat_completion_input` (the prompt formatted for the Llama Stack chat API). For example, one row asks "What is 2+2?" with an expected answer of "4".
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -229,6 +241,14 @@ Found 8 scoring function(s):
     Description: Llm As Judge Scoring Function for SimpleQA Benchmark (https://github.com/openai/simple-evals/blob/main/simpleqa_eval.py)
 ----
 
+[TIP]
+====
+These scoring functions fall into two categories:
+
+* *Deterministic (`basic::*`)* — Fast, binary (0.0 or 1.0), no LLM call needed. `subset_of` checks if the expected answer appears anywhere in the response. `equality` requires an exact match. Best for factual checks with clear right/wrong answers.
+* *LLM-as-Judge (`llm-as-judge::*`)* — Uses a second model to evaluate quality and nuance on a richer scale. More expensive but can assess open-ended questions where there is no single correct answer.
+====
+
 === Benchmarks
 
 List the benchmarks available
@@ -247,7 +267,7 @@ Fetching available benchmarks...
 No benchmarks found
 ----
 
-Register a benchmark
+Register a benchmark. A *Benchmark* combines a *Dataset* (what questions to ask) with one or more *Scoring Functions* (how to grade the answers). An *Eval* then runs a benchmark against a specific *candidate model* to produce scored results.
 
 Here's the snippet of code used by the script to register the benchmark in LlamaStack:
 
@@ -448,11 +468,19 @@ Scores:
    Row 3: {'score': 1.0} | Generation: {'generated_answer': "<think>\nOkay, so the user is asking who wrote Romeo and Juliet. Let me think. I know that Shakespeare is the most famous author associated with that play. But wait, I should make sure I'm not missing any details. Let me recall: Romeo and Juliet is one of the most well-known tragedies by William"}
 ----
 
-The *basic::subset_of* is looking for the answer within the response string from the model.  
+*Understanding the output:*
 
-A more sophisticated way to review and judge the response string from a model is to use the LLM-as-judge pattern.
+* `accuracy: 1.0, num_correct: 3.0, num_total: 3` — all 3 test cases passed. This aggregated score is what you would track over time to detect regressions when changing models or prompts.
+* `score: 1.0` on each row means the expected answer (e.g. "4", "blue", "Shakespeare") was found somewhere within the model's generated response. That is what `basic::subset_of` does — a simple substring check.
+* The `<think>` tags you see in the generated answers are Qwen3's chain-of-thought reasoning. The model "thinks out loud" before producing its final answer. The scorer ignores these tags and just checks if the expected answer appears in the full response.
+
+The *basic::subset_of* scorer is effective for clear-cut factual questions, but it cannot assess whether an explanation is clear, accurate, or well-structured. A more sophisticated way to review and judge the response string from a model is to use the LLM-as-judge pattern.
 
 === LLM-as-judge
+
+In this pattern, a separate LLM (the "judge") evaluates the candidate model's responses on a 1-5 scale and provides a written rationale. This gives much richer feedback than a binary pass/fail — the judge can assess accuracy, clarity, completeness, and presentation. The trade-off is cost and speed: every evaluation requires an inference call to the judge model in addition to the candidate.
+
+Set the judge and candidate model environment variables. Here we use Llama Scout 17B as the judge and Qwen3 14B as the candidate being evaluated:
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -599,8 +627,14 @@ Total evaluations: 3
 ================================================================================
 ----
 
+[NOTE]
+====
+Notice how the judge model evaluates multiple dimensions — accuracy, clarity, completeness, and presentation — and provides a structured written rationale for each score. This is far richer than the binary pass/fail from `basic::subset_of`. However, the eval is only as good as the judge model's reasoning ability, so choosing a capable judge model matters.
+====
 
-Now let's have a little fun and evaluate two different models.
+Now let's have a little fun and evaluate two different models. This test asks each model to identify itself. The expected answer is "Qwen". When we run a model that *is* Qwen, it should score well. When we run a completely different model (Granite), it will honestly identify itself as an IBM model — and the judge will score it low because it doesn't match the expected answer. This demonstrates how evals can verify model identity and catch cases where a model has been swapped or misconfigured in your serving infrastructure.
+
+First, register a new dataset with a "what model are you?" question:
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -666,7 +700,7 @@ Total evaluations: 1
 ================================================================================
 ----
 
-Now try a different model
+Now try a different model. Granite is an IBM model, so it will *not* identify itself as Qwen:
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -711,3 +745,20 @@ A score of 5 would require the model to accurately state "I am Qwen, a large lan
 Total evaluations: 1
 ================================================================================
 ----
+
+[NOTE]
+====
+As expected, Granite scores 1 — it correctly identifies itself as an IBM model, but that doesn't match the expected answer of "Qwen". This isn't a failure of the model; it is the eval working as designed. In production, a test like this ensures the model you _think_ you're running is the one actually serving requests.
+====
+
+== Summary
+
+In this module you:
+
+* Registered a *dataset* of questions and golden answers with Llama Stack
+* Explored *scoring functions* — both deterministic (`basic::subset_of`) and LLM-based (`llm-as-judge`)
+* Created *benchmarks* that combine datasets with scoring functions
+* Ran *evals* against candidate models and reviewed the results
+* Compared two different models (Qwen3 vs Granite) to see how evals catch differences in model behavior
+
+These building blocks — datasets, scoring functions, benchmarks, and evals — are designed to be integrated into CI/CD pipelines so that model changes, prompt updates, or configuration shifts are automatically validated before reaching production.

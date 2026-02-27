@@ -1,7 +1,11 @@
 = Fast Install
 
-The steps, tips and tricks to get up and running as fast as possible. 
+The steps, tips and tricks to get up and running as fast as possible.
 
+[NOTE]
+====
+*When to use this page:* This module is a condensed reference for experienced users who want to set up the entire lab environment quickly without the explanatory content of the individual modules. If this is your first time through the workshop, follow the full modules instead — they provide important context about what each step does and why.
+====
 
 === Install Fast
 

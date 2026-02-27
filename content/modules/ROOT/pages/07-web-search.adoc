@@ -4,6 +4,11 @@ One of the more powerful out of the box tools in Llama Stack is *web search* and
 
 This means your agent/application can have the latest and greatest information available from Internet sources and not wholly rely on its training data.
 
+[TIP]
+====
+*What is Tavily?* Tavily is an AI-optimized search engine designed specifically for LLM applications. Unlike general web search APIs that return raw HTML, Tavily returns clean, structured content that models can directly reason about. The free tier provides enough API calls for development and testing.
+====
+
 
 
 You will *need* a Tavily API key to activate. Sign up at https://www.tavily.com/[www.tavily.com^] and create an API key.
@@ -180,6 +185,11 @@ The last Super Bowl, **Super Bowl LVIII**, was played on **February 11, 2024**, 
 
 The response you receive will be different than the one above as you are dealing with a non-deterministic LLM.  Typically the response includes the winner from 2023 or 2024.
 
+[NOTE]
+====
+*Why is the answer outdated?* The model's training data has a cutoff date (typically mid-2024 for Qwen3). It can only answer based on what it learned during training. Events after that cutoff — like Super Bowl LIX in February 2025 — are invisible to the model without external tools.
+====
+
 Now we can use the builtin tool to use Tavily websearch to **POTENTIALLY** receive a more up to date answer.  
 
 See the snippet below:
@@ -210,6 +220,11 @@ QUESTION="Who won the last Super Bowl?" python 3_web_search.py
 ----
 
 Note: If you are running this query after February 8 2026 then you will likely have a different response.
+
+[TIP]
+====
+*How does it work?* When `tools=[{"type": "web_search"}]` is specified, Llama Stack instructs the model to call Tavily before answering. Tavily searches the web, returns relevant snippets, and the model incorporates that fresh information into its response. Notice the code also passes the Tavily API key via `provider_data` so Llama Stack can authenticate with the search service.
+====
 
 [.console-output]
 [source,text,subs=attributes+]
@@ -281,6 +296,11 @@ For the most current data, I recommend checking reliable sources directly.
 Let me know if you'd like help with anything within my training scope!
 ----
 
+[NOTE]
+====
+*Why check the cutoff?* Knowing your model's knowledge cutoff tells you which questions need web search augmentation and which can rely on training data alone. For factual questions about events after the cutoff, web search is essential. For stable knowledge (math, science, history), the model's training data is typically sufficient.
+====
+
 === Today
 
 A key tip to make your search results better is to simply add *Today* to every prompt.
@@ -291,6 +311,11 @@ prompt=f"Today is {today}. Who is the current US President?"
 ----
 
 Simply knowing about today's date helps the model reason about things that are temporal in nature such as "current", "Q2" or "last year".
+
+[TIP]
+====
+*A simple but powerful pattern:* Prepending `Today is {date}` to every prompt is a low-cost, high-impact technique. It helps the model distinguish between "current" (needs web search) and "historical" (training data is fine), and it helps Tavily return more relevant, time-appropriate results. Consider making this a standard part of your prompt template in production.
+====
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -329,6 +354,14 @@ cat << EOF | curl -sS "$LLAMA_STACK_BASE_URL/v1/responses" \
 EOF
 ----
 
+== Summary
 
+In this module you:
 
+* Compared model responses *with and without* web search, seeing how training data cutoffs create stale answers
+* Used Tavily via Llama Stack's built-in `web_search` tool to get current information
+* Learned the importance of knowing your model's *knowledge cutoff date*
+* Applied the *"Today is..."* prompt pattern to improve temporal reasoning and search relevance
+* Accessed web search through both the Python SDK and direct REST API calls
 
+Web search is one of the simplest tools to add to your agents, and it immediately addresses one of the most common complaints about LLMs -- outdated information.

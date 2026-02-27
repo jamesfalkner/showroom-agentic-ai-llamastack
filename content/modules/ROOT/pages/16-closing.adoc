@@ -80,6 +80,11 @@ You now have hands-on experience building, deploying, and operating agentic AI s
 
 == Next steps
 
+[TIP]
+====
+*Taking this to your own environment:* The patterns you practiced — Llama Stack distribution, MCP servers, agent frameworks, observability with Langfuse — are all portable. You can reproduce this architecture on any OpenShift cluster with GPU access by following the same Helm charts and CRDs used in this lab. The key components (Llama Stack, vLLM, FastMCP, LangGraph, Langfuse, Langflow) are all open source.
+====
+
 Ready to continue your AI journey? Explore more innovative AI use cases and quickstart guides:
 
 **Red Hat AI Quickstarts**: https://docs.redhat.com/en/learn/ai-quickstarts

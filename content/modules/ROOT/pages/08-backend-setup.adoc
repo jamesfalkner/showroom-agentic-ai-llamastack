@@ -211,6 +211,11 @@ pwd
 
 Install the enterprise backend databases and REST APIs
 
+[TIP]
+====
+*What is Helm?* Helm is the package manager for Kubernetes. A Helm chart bundles all the YAML manifests (Deployments, Services, ConfigMaps, etc.) needed to deploy an application. Running `helm install` deploys the entire FantaCo backend — two PostgreSQL databases and two FastAPI services — in a single command.
+====
+
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
@@ -245,7 +250,12 @@ postgresql-customer-ff78dffdf-tpj9c             1/1     Running   0          12m
 postgresql-finance-689d97894f-2fq89             1/1     Running   0          12m
 ----
 
-And wait for the *1/1 Running* before continuing 
+And wait for the *1/1 Running* before continuing
+
+[NOTE]
+====
+*What's running now?* You have 5 pods: the Llama Stack server from the earlier module, two PostgreSQL databases (one for customer data, one for financial data), and two FastAPI microservices that expose REST APIs over those databases. This mirrors a real enterprise setup where business data lives in separate domain-specific services.
+====
 
 === *Test backend*
 
@@ -293,6 +303,11 @@ curl -sS -L "$CUST_URL/api/customers?contactEmail=thomashardy%40example.com" | j
   }
 ]
 ----
+
+[TIP]
+====
+*Why test with curl first?* Verifying the REST APIs directly confirms the backend is healthy before adding the MCP layer. If something fails later, you'll know the issue is in the MCP translation — not the underlying data.
+====
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -374,6 +389,11 @@ MCP servers act as the translation layer between Llama Stack's tool invocation p
 4. **Formats responses**: Converts API responses into MCP-compatible tool results
 
 The Fantaco deployment includes 2 MCP servers, one for each domain:
+
+[NOTE]
+====
+*The MCP servers don't contain business logic.* They are thin adapters that translate MCP tool invocations into REST API calls. The actual business rules, data validation, and database queries stay in the backend services. This separation means you can add AI capabilities to existing systems without modifying them.
+====
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]

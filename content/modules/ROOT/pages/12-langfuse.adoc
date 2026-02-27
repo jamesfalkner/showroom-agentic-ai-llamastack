@@ -8,7 +8,12 @@ However, Agents do have some unique aspects that require additional infrastructu
 * Evals
 * Feedback 
 
-The open source solution for these capabilities is in *Langfuse*.  
+The open source solution for these capabilities is in *Langfuse*.
+
+[TIP]
+====
+*Why do agents need specialized observability?* Traditional application monitoring tracks request latency and error rates. Agent observability must also capture the *reasoning chain*: which tools were called, what data was returned, how the model synthesized its answer, and whether the user found it helpful. Langfuse provides this AI-specific observability layer on top of the platform-level monitoring that OpenShift already provides.
+====
 
 Traces are mission critical for debugging, production support and for the intial capture of end-user intent and subsequent creation of evals.
 Feedback is vital to incrementally improving the quality of your agent over time. 
@@ -374,6 +379,11 @@ image::langfuse-thomas-hardy.png[]
 
 image::langfuse-fran-wilson.png[]
 
+[NOTE]
+====
+*What do traces show you?* Each trace captures the complete lifecycle of a request: the user's input, every LLM inference call, every tool invocation (including MCP calls to customer and finance services), the tool responses, and the final generated answer. This is invaluable for debugging why an agent gave a wrong answer — you can see exactly which tool returned unexpected data or where the model's reasoning went wrong.
+====
+
 == Evals
 
 The backend also provides a call to execute Langfuse Evals.  If you open up `6-langgraph-langfuse-fastapi-chatbot.py` you will find an endpoint defined via `@app.post("/evaluate", response_model=EvaluationResponse)`
@@ -479,7 +489,10 @@ image::langfuse-scores-1.png[]
 
 image::langfuse-fran-wilson-delivered-orders-1.png[]
 
-
+[NOTE]
+====
+*Keyword-based evals:* These evals use a simple but effective approach — they check if specific expected keywords appear in the agent's response. For example, the "Thomas Hardy" test expects "Around the Horn" and "Sales Representative". A score of 1.0 means all keywords matched. This is lighter-weight than LLM-as-judge (which you saw in the Llama Stack Evals module) but well-suited for verifying that agents return correct factual data from their tools.
+====
 
 == Feedback
 
@@ -584,6 +597,14 @@ Feedback:
 
 You can provide the **get-trace-feedback.sh** with a specific trace id.
 
+== Summary
 
+In this module you:
 
+* Deployed *Langfuse* as an observability platform for your AI agents
+* Captured *traces* that show the complete reasoning chain for each agent interaction — from user input through tool calls to final response
+* Ran *keyword-based evals* against your agent to verify it returns correct customer and order data
+* Used the *feedback system* (thumbs up/down with comments) to capture end-user satisfaction tied to specific traces
+
+These three capabilities — traces, evals, and feedback — form a continuous improvement loop: traces help you debug, evals help you prevent regressions, and feedback helps you discover what to improve next.
 

@@ -185,7 +185,12 @@ Using project "agentic-{user}".
 Welcome! See 'oc help' to get started.
 ----
 
-Your cluster and namespace have a Custom Resource Definition (CRD) available for the Kind *LlamaStackDistribution* therefore you can create your own instance of a Llama Stack Server. 
+Your cluster and namespace have a Custom Resource Definition (CRD) available for the Kind *LlamaStackDistribution* therefore you can create your own instance of a Llama Stack Server.
+
+[TIP]
+====
+*What is a CRD?* A Custom Resource Definition extends the Kubernetes API with new resource types. The `LlamaStackDistribution` CRD teaches OpenShift how to manage Llama Stack servers as first-class Kubernetes objects — meaning you can create, update, and delete Llama Stack instances using the same `oc apply` workflow you use for any other OpenShift resource.
+====
 
 Using *Terminal 1*, check if the LlamaStackDistribution CRD is available:
 
@@ -251,7 +256,12 @@ odh-trusted-ca-bundle         2      64m
 openshift-service-ca.crt      1      65m
 ----
 
-You can also view the llamastack configuration in the ConfigMap via the `oc` command. 
+[TIP]
+====
+*What does the ConfigMap configure?* The `llama-stack-config` ConfigMap contains a `run.yaml` file that defines which providers (inference engines, vector stores, safety shields) your Llama Stack distribution will use, along with their connection details. This separates configuration from the deployment manifest, making it easy to change providers without redeploying the server.
+====
+
+You can also view the llamastack configuration in the ConfigMap via the `oc` command.
 
 [.console-input]
 [source,yaml,role="copypaste",subs=attributes+]
@@ -269,6 +279,16 @@ curl -sS {litellm_api_base_url}/models   -H "Authorization: Bearer {litellm_virt
 
 
 Review the Llama Stack Server manifest below and apply by copy and paste the command in the terminal in order to install a Llama Stack Distribution for vLLM using Model-as-a-Service (MaaS):
+
+[TIP]
+====
+*Key fields in the manifest below:*
+
+* `distribution.name: rh-dev` — selects the Red Hat development distribution, which pre-configures supported providers
+* `port: 8321` — the standard Llama Stack server port that all clients connect to
+* `VLLM_API_URL` / `VLLM_API_TOKEN` — points Llama Stack at the MaaS endpoint where your models are hosted, so Llama Stack proxies inference requests to vLLM
+* `userConfig.configMapName` — links to the ConfigMap you just created, which defines the full provider configuration
+====
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -362,4 +382,9 @@ NAME                                   TYPE        CLUSTER-IP       EXTERNAL-IP 
 llamastack-distribution-vllm-service   ClusterIP   172.231.210.76   <none>        8321/TCP   3m46s
 ----
 
-If you see the pod and service then congratulations, you have a successfully deployed Llama Stack.  In the next chapter, you will be exploring Llama Stack. 
+[NOTE]
+====
+*What just happened?* The Llama Stack Operator saw your `LlamaStackDistribution` custom resource and automatically created a Deployment (which manages the pod) and a ClusterIP Service (which gives it a stable DNS name within the cluster). Your applications will connect to Llama Stack via the service name `llamastack-distribution-vllm-service` on port `8321` — you'll use this URL throughout the remaining lab modules.
+====
+
+If you see the pod and service then congratulations, you have a successfully deployed Llama Stack.  In the next chapter, you will be exploring Llama Stack.

@@ -6,6 +6,11 @@ This module focuses on the deployment of a backend and frontend - a web-based ch
 
 There is a helm chart to deploy both the frontend and backend to keep things simple.
 
+[TIP]
+====
+*What are you deploying?* The Helm chart deploys two pods: a *LangGraph FastAPI backend* (Python agent that handles reasoning, tool calling, and MCP communication) and a *Chat UI* (Node.js web interface that provides a conversational front-end). Together they form a complete agent application that users can interact with through a browser.
+====
+
 == Agent with Chat UI
 
 Make sure you are in the correct directory
@@ -103,6 +108,10 @@ image::chat_ui_1.png[]
 The tools available to me are designed for managing customer data, order history, invoices, and related tasks. They do not include functionality for retrieving general knowledge facts like the capital of Italy. You'll need to consult a geography resource or a general knowledge database for that information.
 ----
 
+[NOTE]
+====
+*Why did the agent refuse?* The LangGraph backend is configured with a system prompt that restricts it to customer and finance operations only. When asked general knowledge questions, the agent correctly identifies that none of its registered tools can help and declines to guess. This is intentional — in production, you want agents to stay within their defined scope.
+====
 
 Try questions specific to the domain of the Agent thanks to the previously deployed and registered Customer and Finance MCP servers
 
@@ -141,7 +150,7 @@ What is the status of order 6 for Fran Wilson?
 
 image::chat_ui_4.png[]
 
+== Summary
 
-
-
+In this module you deployed a complete agent application stack — a LangGraph FastAPI backend connected to MCP servers for customer and finance data, fronted by a web-based Chat UI. You saw how the agent stays within its domain (refusing general knowledge questions), how it leverages MCP tools to answer business questions, and how you can monitor agent behavior through Llama Stack logs. This architecture — chat UI, agent backend, MCP servers, business microservices — is a reference pattern for production enterprise AI applications.
 

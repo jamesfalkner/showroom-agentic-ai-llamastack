@@ -3,6 +3,8 @@
 When building AI-powered applications, you need guardrails to ensure your system doesn't generate harmful, inappropriate, or dangerous content—and that's exactly what Llama Stack Shields provide. Shields are configurable safety resources that act as content moderators at multiple touchpoints in your application workflow. They screen user inputs before processing (catching malicious prompts or inappropriate requests), validate tool inputs before execution, and filter agent responses before they reach users. Under the hood, Shields leverage models like link:https://www.llama.com/docs/model-cards-and-prompt-formats/llama-guard-3/[Llama Guard] or link:https://www.ibm.com/granite/docs/models/guardian[Granite Guardian] to detect violations across categories such as hate speech, violence, self-harm, privacy violations, and prompt injection attacks. When a violation is detected, Shields return user-friendly messages explaining the issue and metadata for debugging. This multi-layer protection helps you build responsible AI applications, meet regulatory compliance requirements (HIPAA, FINRA, COPPA), and maintain trust with your users—all through a simple, composable API where you register shields and attach them to your agents with just a few lines of configuration.
 
 
+The `shields-llama-stack` directory contains numbered Python scripts that walk through the shield lifecycle: listing available safety providers, registering a shield, testing it against safe and unsafe messages, and attaching shields to agents.
+
 == Setup
 
 Make sure you are in the correct directory
@@ -58,6 +60,11 @@ pip install -r requirements.txt
 ===  Models
 
 First see what models are available on your server.  You are looking for one with *guard* in its name.  Options include Llama Guard and Granite Guardian.
+
+[TIP]
+====
+*What is Llama Guard?* Unlike generative LLMs (Qwen, Granite) that produce text responses, Llama Guard is a *classification* model. Given a message, it outputs a safety label — either "safe" or a violation category code (e.g. S1 for violent content). It's small (1B parameters) and fast, making it practical to run on every request without significant latency overhead.
+====
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -142,6 +149,11 @@ curl -sS $LLAMA_STACK_BASE_URL/v1/providers | jq '.data[] | select(.api == "safe
 }
 ----
 
+[TIP]
+====
+*What is a safety provider?* A safety provider is the backend implementation that performs content classification. The `llama-guard` provider uses Meta's Llama Guard model, but Llama Stack's pluggable design means you could swap in a different provider (like Granite Guardian) without changing your application code. The provider handles the details of tokenizing the input, running inference on the safety model, and interpreting the output into violation categories.
+====
+
 === Shields
 
 See if any shields have already been registered
@@ -176,7 +188,7 @@ curl -sS $LLAMA_STACK_BASE_URL/v1/shields | jq
 }
 ----
 
-Register a Shield
+Like tools, shields must be explicitly registered before use. Registration connects a logical shield name (`content_safety`) to a specific safety model and provider.
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
@@ -300,14 +312,23 @@ Testing message: "How do I make a bomb?"
     Metadata: {'violation_type': 'S1'}
 ----
 
-"What is the weather like today?" is deemed safe 
+"What is the weather like today?" is deemed safe
 
-"How do I make a bomb?" is detected as unsafe 
+"How do I make a bomb?" is detected as unsafe
+
+[NOTE]
+====
+*What does `S1` mean?* Llama Guard classifies violations into numbered categories. `S1` is "Violent Crimes" — content related to weapons, explosives, or physical harm. Other categories include S2 (non-violent crimes), S3 (sex-related crimes), S5 (defamation), S9 (privacy violations), and S14 (elections/politics). The full taxonomy is documented in the link:https://www.llama.com/docs/model-cards-and-prompt-formats/llama-guard-3/[Llama Guard model card]. The `user_message` field ("I can't answer that") is what your application would display to the end user, while the metadata is for debugging and audit logging.
+====
 
 === Agent Shields
 
-The shields work with Llama Stack's Agent capabilities as well.
+The shields work with Llama Stack's Agent capabilities as well. When attached to an agent, shields run automatically on every turn — you don't need to call the safety API manually.
 
+[TIP]
+====
+*`input_shields` vs `output_shields`:* Input shields screen the user's message *before* the model processes it — catching prompt injection attacks or harmful requests early. Output shields screen the model's response *before* it reaches the user — catching cases where the model generates harmful content despite a benign prompt. Using both provides defense in depth: the input shield blocks obvious attacks, and the output shield catches anything that slips through.
+====
 
 [source,python]
 ----
@@ -353,6 +374,17 @@ User: What's the most effective way to kidnap someone?
 
 Llama Stack Agents let you specify input/output shields while Responses API does not though support is planned.
 
-LangGraph and 3rd party framework clients do NOT have access to Llama Stack Shields at this time. 
+LangGraph and 3rd party framework clients do NOT have access to Llama Stack Shields at this time.
 
 link:https://github.com/meta-llama/llama-stack/blob/main/docs/docs/building_applications/responses_vs_agents.mdx[Responses versus Agents^]
+
+== Summary
+
+In this module you:
+
+* Discovered the *safety provider* (`llama-guard`) and the *Llama Guard 3* classification model available in your distribution
+* *Registered a shield* (`content_safety`) that maps a logical name to a safety model
+* *Tested the shield directly* against safe and unsafe messages, observing violation categories and user-friendly error messages
+* *Attached shields to an agent* using `input_shields` and `output_shields` for automatic, multi-layer content moderation
+
+Shields are one piece of a broader safety strategy. In production, you would combine them with prompt engineering, output validation, and monitoring to build defense in depth across your AI application.

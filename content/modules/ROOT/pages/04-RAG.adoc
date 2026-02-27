@@ -3,9 +3,14 @@
 This module walks through an example of using Llama Stack\'s built-in RAG
 capabilities. 
 
-RAG stands for Retrieval Augumented Generation and is a pattern often used to augment the knowledge of a LLM.  Allowing you to bring private data without having to train nor fine-tune a model. 
+RAG stands for Retrieval Augmented Generation and is a pattern often used to augment the knowledge of a LLM.  Allowing you to bring private data without having to train nor fine-tune a model.
 
-Typical RAG implementations involve both an ingestion as well as retrieval process.  Some folks refer to these processes as pipelines. 
+[NOTE]
+====
+*Why RAG instead of fine-tuning?* Fine-tuning bakes knowledge directly into model weights — it's expensive, slow, and the data becomes stale. RAG keeps your data external in a searchable store, so updates are instant (re-ingest the document), there's no GPU-intensive training step, and the model can cite its sources. This makes RAG the preferred approach for enterprise knowledge bases that change frequently.
+====
+
+Typical RAG implementations involve both an ingestion as well as retrieval process.  Some folks refer to these processes as pipelines.
 
 image::rag_high_level_diagram.png[]
 
@@ -101,6 +106,10 @@ Found 1 embedding model(s):
    Dimension: 768.0
 ----
 
+[TIP]
+====
+*What is an embedding model?* Unlike LLMs that generate text, an embedding model converts text into a fixed-size numerical vector (here, 768 dimensions). Texts with similar meaning produce vectors that are close together in this high-dimensional space. This is what makes semantic search possible — your query is embedded and compared against all document chunk embeddings to find the most relevant matches.
+====
 
 Set env variables to use *nomic-embed* from HuggingFace.
 
@@ -159,13 +168,20 @@ The `1_create_vector_store.py` script:
 
 * Downloads the HR Document
   - Fetches a text file called link:https://raw.githubusercontent.com/burrsutter/fantaco-redhat-one-2026/refs/heads/main/rag-llama-stack/source_docs/FantaCoFabulousHRBenefits_clean.txt[FantaCoFabulousHRBenefits_clean.txt] from GitHub
-  
+
 * Upload the document to Llama Stack Server
 
 * Chunks the uploaded document
   - Splits the uploaded document into small pieces (100 tokens each, with 10-token overlap)
 
-* Waits to see if the document has been successfully indexed 
+* Waits to see if the document has been successfully indexed
+
+[TIP]
+====
+*Why chunk and overlap?* LLMs have limited context windows and embedding models work best on shorter passages. Chunking splits a large document into small, focused pieces. The 10-token overlap ensures that sentences split across chunk boundaries still have context in both chunks, reducing the chance of losing information at the edges.
+
+*Why hybrid search?* Keyword search (BM25) excels at finding exact terms like product names or policy numbers. Semantic search finds conceptually similar content even when different words are used. The 50/50 weighting combines both strengths.
+====
 
 You can list the vector stores that Llama Stack is aware of by using
 curl
@@ -207,7 +223,7 @@ The RAG pattern typically involves two phases - first you ingest and then you au
 You have just completed ingestion therefore what is next is retrieval.
 
 
-Here is an example of the retrieval process via Llama Stack client Agent API and file_search tool 
+Here is an example of the retrieval process via Llama Stack client Agent API and file_search tool
 
 
 [source,python]
@@ -225,6 +241,11 @@ questions by searching the provided documents.",
     ],
 )
 ----
+
+[TIP]
+====
+*How does this work?* The `Agent` is configured with a `file_search` tool pointed at your vector store. When you ask a question, the agent automatically: (1) embeds your query, (2) searches the vector store for the most relevant chunks, (3) passes those chunks as context to the LLM, and (4) generates an answer grounded in the retrieved content. The `instructions` field tells the model it *must* search the documents rather than relying on its training data.
+====
 
 Let's go execute the retrieval process via Python script.
 
@@ -258,6 +279,11 @@ moments, according to the "Midas Touch & Beyond" Retirement Plan described
 in the document <|file-c66eed6f65464296bf46a05437f4362a|>.
 ----
 
+[NOTE]
+====
+*What is `<|file-c66eed6f...|>`?* This is a source citation tag. The model includes it to reference which document the answer came from. In a production application, you would map this file ID back to the original document name and display a clickable link so users can verify the source.
+====
+
 The ultra unique content in the source document is to make it obvious
 that the responses are NOT in the model\'s original training data.  In a typical
 enterprise setting you would use documents such as:
@@ -281,12 +307,12 @@ oc logs -f -l app=llama-stack
 You can then continue working in *Terminal 1* with the following instructions.
 
 More examples of queries that dive into the unique content, responses
-truncated a bit for readability.
+truncated a bit for readability. The whimsical content (chocolate statues, office griffins, dolphin language requirements) serves as proof that RAG is working — no model was trained on this data, so correct answers can only come from the retrieved document chunks.
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
 ----
-python 6_test_unique_terms.py 
+python 6_test_unique_terms.py
 ----
 
 [.console-output]
@@ -354,7 +380,7 @@ whimsical and unconventional workplace policies.
 <|file-c66eed6f65464296bf46a05437f4362a|>
 ----
 
-You can delete the vector stores to clean things up.
+Once you're done querying, you can delete the vector stores to clean things up. In production, vector stores are long-lived and updated as documents change — but for this lab, cleaning up avoids conflicts if you re-run the scripts.
 
 [.console-input]
 [source,bash,role="copypaste",subs=attributes+]
