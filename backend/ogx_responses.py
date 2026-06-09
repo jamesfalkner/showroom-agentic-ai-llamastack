@@ -53,16 +53,32 @@ async def stream_response(
         if previous_response_id:
             request_params["previous_response_id"] = previous_response_id
 
-        # Create the streaming response
         logger.info(f"Creating Responses API request with model: {model}")
         if previous_response_id:
             logger.info(f"Using previous_response_id for conversation continuity: {previous_response_id}")
+
         response = client.responses.create(**request_params)
 
-        # Stream the response
+        # Stream the response. If the provider rejects reasoning_effort,
+        # the error arrives as a response.failed event — retry without it.
         for event in response:
+            event_type = getattr(event, 'type', None)
+            if event_type == 'response.failed' and "reasoning" in request_params:
+                error_msg = ""
+                response_obj = getattr(event, 'response', None)
+                if response_obj:
+                    error_info = getattr(response_obj, 'error', None)
+                    if error_info:
+                        error_msg = getattr(error_info, 'message', '')
+                if "reasoning_effort" in error_msg:
+                    logger.warning("Provider rejected reasoning_effort, retrying without it")
+                    del request_params["reasoning"]
+                    response = client.responses.create(**request_params)
+                    for retry_event in response:
+                        yield retry_event
+                        await asyncio.sleep(0)
+                    return
             yield event
-            # Force event loop to yield and flush
             await asyncio.sleep(0)
 
     except Exception as e:
