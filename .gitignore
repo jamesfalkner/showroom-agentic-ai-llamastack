@@ -17,6 +17,10 @@ frontend/node_modules/
 # Dynamic files created during frontend build
 _next/
 
+# OGX / vector store data
+.ogx/
+build-context-vectors/
+
 # Python cache
 __pycache__/
 *.py[cod]

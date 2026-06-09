@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Showroom AI Assistant Backend v2
-FastAPI service with LlamaStack multi-agent system, RAG, and MCP integration
+FastAPI service with OGX multi-agent system, RAG, and MCP integration
 """
 import asyncio
 import os
@@ -14,12 +14,11 @@ from contextlib import asynccontextmanager
 
 import httpx
 import yaml
-from llama_stack_client import LlamaStackClient
-from llama_stack_client.types import UserMessage, SystemMessage, CompletionMessage
+from ogx_client import OgxClient
 from PyPDF2 import PdfReader
 
-# Import LlamaStack Responses API helper
-from llamastack_responses import stream_response, format_response_event_for_sse
+# Import OGX Responses API helper
+from ogx_responses import stream_response, format_response_event_for_sse
 
 # Import RAG initialization
 from rag_init import initialize_vector_store
@@ -114,8 +113,8 @@ class Config:
     def __init__(self):
         self.config_data = load_config()
 
-        # LlamaStack Configuration
-        self.LLAMA_STACK_URL = os.getenv("LLAMA_STACK_URL", "http://localhost:8321")
+        # OGX Configuration
+        self.OGX_URL = os.getenv("OGX_URL", "http://localhost:8321")
 
         # LLM Configuration
         # Support both old (single engine) and new (multiple engines) format
@@ -280,10 +279,10 @@ class MCPManager:
 
 
 class MultiAgentSystem:
-    """Multi-agent system using LlamaStack"""
+    """Multi-agent system using OGX"""
 
-    def __init__(self, llama_stack_url: str, mcp_manager: MCPManager, vector_store_id: Optional[str] = None, config_data: dict = None):
-        self.llama_stack_url = llama_stack_url
+    def __init__(self, ogx_url: str, mcp_manager: MCPManager, vector_store_id: Optional[str] = None, config_data: dict = None):
+        self.ogx_url = ogx_url
         self.mcp_manager = mcp_manager
         self.vector_store_id = vector_store_id
         self.client = None
@@ -324,12 +323,12 @@ class MultiAgentSystem:
             self.agents = {}
 
     async def initialize(self):
-        """Initialize LlamaStack client"""
-        self.client = LlamaStackClient(
-            base_url=self.llama_stack_url,
+        """Initialize OGX client"""
+        self.client = OgxClient(
+            base_url=self.ogx_url,
             timeout=config.LLM_TIMEOUT
         )
-        logger.info(f"LlamaStack client initialized at {self.llama_stack_url} with {config.LLM_TIMEOUT}s timeout")
+        logger.info(f"OGX client initialized at {self.ogx_url} with {config.LLM_TIMEOUT}s timeout")
         logger.info("Using Responses API - tools will be configured per-request")
 
     def _select_agent(self, message: str, agent_type: Optional[str] = None) -> str:
@@ -384,7 +383,7 @@ class MultiAgentSystem:
         # Generate response
         yield f"data: {json.dumps({'status': 'Generating response...'})}\n\n"
 
-        # Use LlamaStack Responses API
+        # Use OGX Responses API
         async for chunk in self._stream_with_responses_api(
             message,
             system_prompt,
@@ -402,7 +401,7 @@ class MultiAgentSystem:
         include_mcp: bool,
         previous_response_id: Optional[str] = None
     ) -> AsyncGenerator[str, None]:
-        """Stream response using LlamaStack Responses API"""
+        """Stream response using OGX Responses API"""
 
         # Log conversation continuity
         if previous_response_id:
@@ -473,7 +472,7 @@ class MultiAgentSystem:
                     yield f"data: {formatted}\n\n"
 
         except Exception as e:
-            logger.error(f"LlamaStack Responses API error: {e}")
+            logger.error(f"OGX Responses API error: {e}")
             import traceback
             traceback.print_exc()
             yield f"data: {json.dumps({'error': str(e)})}\n\n"
@@ -531,15 +530,15 @@ async def lifespan(app):
 
     logger.info("Application starting up...")
 
-    # Initialize LlamaStack client for vector store initialization
-    llama_client = LlamaStackClient(
-        base_url=config.LLAMA_STACK_URL,
+    # Initialize OGX client for vector store initialization
+    ogx_client = OgxClient(
+        base_url=config.OGX_URL,
         timeout=config.LLM_TIMEOUT
     )
 
     # Check for existing vector store (pre-built vectors from init container)
     # Do NOT generate vectors at runtime - they should be pre-built in the container image
-    # Retry logic to wait for LlamaStack to be ready
+    # Retry logic to wait for OGX to be ready
     vector_store_id = None
     max_retries = 25
     retry_delay = 5  # seconds
@@ -547,7 +546,7 @@ async def lifespan(app):
     for attempt in range(1, max_retries + 1):
         try:
             logger.info(f"Checking for existing vector store (attempt {attempt}/{max_retries})...")
-            stores = llama_client.vector_stores.list()
+            stores = ogx_client.vector_stores.list()
 
             # Look for workshop-docs vector store
             existing_store = None
@@ -588,10 +587,10 @@ async def lifespan(app):
                 time.sleep(retry_delay)
             else:
                 # Final attempt failed - give up and exit
-                logger.error(f"✗ Failed to connect to LlamaStack after {max_retries} attempts")
+                logger.error(f"✗ Failed to connect to OGX after {max_retries} attempts")
                 logger.error(f"  Last error: {e}")
-                logger.error("  Container will exit. Please check that LlamaStack is running and accessible.")
-                raise RuntimeError(f"Failed to connect to LlamaStack after {max_retries} attempts: {e}") from e
+                logger.error("  Container will exit. Please check that OGX is running and accessible.")
+                raise RuntimeError(f"Failed to connect to OGX after {max_retries} attempts: {e}") from e
 
     # Load MCP config
     mcp_config = config.config_data.get('mcp', {})
@@ -621,10 +620,10 @@ async def lifespan(app):
 
     # Initialize agent system with vector store ID and config
     agent_system = MultiAgentSystem(
-        config.LLAMA_STACK_URL,
+        config.OGX_URL,
         mcp_manager,
         vector_store_id,
-        config.config_data  # Pass the full config data
+        config.config_data
     )
     await agent_system.initialize()
 
@@ -641,7 +640,7 @@ async def lifespan(app):
 # FastAPI app
 app = FastAPI(
     title="Showroom AI Assistant Backend v2",
-    description="Multi-agent AI Assistant with LlamaStack, RAG, and MCP integration",
+    description="Multi-agent AI Assistant with OGX (Open GenAI Stack), RAG, and MCP integration",
     version="2.0.0",
     lifespan=lifespan
 )
@@ -705,7 +704,7 @@ async def query_rag(rag_request: RAGQueryRequest):
         logger.info(f"Vector store ID: {agent_system.vector_store_id}")
 
         # Call the vector store search API directly
-        search_url = f"{config.LLAMA_STACK_URL}/v1/vector_stores/{agent_system.vector_store_id}/search"
+        search_url = f"{config.OGX_URL}/v1/vector_stores/{agent_system.vector_store_id}/search"
 
         search_payload = {
             "query": rag_request.query,
@@ -807,14 +806,14 @@ async def health_check():
     if not agent_system or not agent_system.client:
         errors.append("Agent system not initialized")
 
-    # Check if LlamaStack is reachable
-    llama_stack_healthy = False
+    # Check if OGX is reachable
+    ogx_healthy = False
     try:
         async with httpx.AsyncClient(timeout=5.0) as client:
-            response = await client.get(f"{config.LLAMA_STACK_URL}/v1/models")
-            llama_stack_healthy = response.status_code == 200
+            response = await client.get(f"{config.OGX_URL}/v1/models")
+            ogx_healthy = response.status_code == 200
     except Exception as e:
-        errors.append(f"LlamaStack unreachable: {str(e)}")
+        errors.append(f"OGX unreachable: {str(e)}")
 
     # Check if MCP manager initialized
     if mcp_manager and not mcp_manager._initialized:
@@ -836,10 +835,10 @@ async def health_check():
         "status": "healthy" if is_healthy else "unhealthy",
         "version": "2.0.0",
         "api_type": "responses",  # Using Responses API now
-        "llama_stack": {
+        "ogx": {
             "enabled": True,
-            "url": config.LLAMA_STACK_URL,
-            "healthy": llama_stack_healthy
+            "url": config.OGX_URL,
+            "healthy": ogx_healthy
         },
         "vector_store": agent_system.vector_store_id if agent_system else None,
         "rag_enabled": agent_system.vector_store_id is not None if agent_system else False,

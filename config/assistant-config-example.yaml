@@ -3,11 +3,11 @@
 
 # Workshop Metadata
 workshop:
-  title: "Agentic AI with Llama Stack and 3rd party frameworks"
+  title: "Agentic AI with OGX and 3rd party frameworks"
   focus: "Hands-on learning with Red Hat technologies"
   example_questions:
     - "What is this workshop about?"
-    - "What's the difference between LlamaStack Client and LangGraph?"
+    - "What's the difference between the OGX Client and LangGraph?"
     - "What Red Hat Products are featured in this workshop?"
 
 # MCP (Model Context Protocol) Configuration
@@ -33,15 +33,15 @@ llm:
   # Example: ["vllm", "ollama"] enables both vLLM for inference and Ollama for embeddings
   engines: ["vllm"]
 
-  # LlamaStack will use this model for generating responses
+  # OGX will use this model for generating responses
   # The model name should match one of the enabled engines (e.g., "vllm/model-name")
-  model: "vllm/qwen3-14b-gaudi"
+  model: "vllm/qwen3-14b"
 
   # Embedding model for RAG vector store
   # Can use a different engine than the main model (e.g., "ollama/nomic-embed-text")
   # embedding_model: "openai/text-embedding-3-small"
 
-  # HTTP timeout in seconds for LlamaStack client requests
+  # HTTP timeout in seconds for OGX client requests
   # Increase this for slower models or when using local vLLM/Ollama
   # Default: 120 seconds
   timeout: 600

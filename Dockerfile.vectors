@@ -7,7 +7,7 @@ RUN mkdir -p /vector-data
 
 # Copy the vector store files
 # These will be populated during the GitHub Action build
-COPY .llama/ /vector-data/
+COPY .ogx/ /vector-data/
 
 # Copy the copy script
 COPY copy-vectors.sh /copy-vectors.sh

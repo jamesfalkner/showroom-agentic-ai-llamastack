@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
-LlamaStack Responses API integration
-Functions for using LlamaStack's modern Responses API with MCP tools and RAG
+OGX Responses API integration
+Functions for using OGX's Responses API with MCP tools and RAG
 """
 import asyncio
 import json
@@ -24,7 +24,7 @@ async def stream_response(
     """Create a streaming response using the Responses API
 
     Args:
-        client: LlamaStackClient instance
+        client: OgxClient instance
         model: LLM model to use (e.g., "openai/gpt-4o")
         user_message: User's message/input
         instructions: System instructions/prompt
@@ -72,13 +72,13 @@ async def stream_response(
 
 
 def fetch_file_attributes(client, vector_store_id: str, file_id: str) -> Optional[Dict]:
-    """Fetch file attributes from LlamaStack API
+    """Fetch file attributes from OGX API
 
     This is a workaround for a bug where attributes aren't returned in file_search
     results from the Responses API.
 
     Args:
-        client: LlamaStackClient instance
+        client: OgxClient instance
         vector_store_id: Vector store ID
         file_id: File ID
 
@@ -117,7 +117,7 @@ def format_response_event_for_sse(chunk, client=None, vector_store_id: Optional[
 
     Args:
         chunk: Event from Responses API
-        client: LlamaStackClient instance (optional, for fetching file attributes)
+        client: OgxClient instance (optional, for fetching file attributes)
         vector_store_id: Vector store ID (optional, for fetching file attributes)
     """
     try:

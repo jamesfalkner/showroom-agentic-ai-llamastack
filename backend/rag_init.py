@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 RAG Initialization Module
-Loads documents and uploads them to LlamaStack vector store
+Loads documents and uploads them to OGX vector store
 """
 import logging
 import tempfile
@@ -16,10 +16,10 @@ logger = logging.getLogger(__name__)
 
 async def initialize_vector_store(client, content_dir: str, pdf_dir: str, min_chunk_size: int = 100, embedding_model: str = "text-embedding-3-small"):
     """
-    Initialize LlamaStack vector store with workshop documents
+    Initialize OGX vector store with workshop documents
 
     Args:
-        client: LlamaStackClient instance
+        client: OgxClient instance
         content_dir: Path to AsciiDoc content directory
         pdf_dir: Path to PDF documentation directory
         min_chunk_size: Minimum size for document chunks
@@ -339,20 +339,20 @@ if __name__ == "__main__":
     Standalone script to pre-build vector embeddings for GitHub Actions
 
     Requirements:
-        Python 3.12+ (required by llama-stack-client>=0.3.0)
+        Python 3.12+
 
     Usage:
-        python rag_init.py --llama-stack-url http://localhost:8321 \
+        python rag_init.py --ogx-url http://localhost:8321 \
                           --content-dir ../rag-content \
                           --pdf-dir ../content/modules/ROOT/assets/techdocs \
                           --embedding-model text-embedding-3-small
     """
     import argparse
     import sys
-    from llama_stack_client import LlamaStackClient
+    from ogx_client import OgxClient
 
     parser = argparse.ArgumentParser(description='Pre-build vector embeddings')
-    parser.add_argument('--llama-stack-url', required=True, help='LlamaStack server URL')
+    parser.add_argument('--ogx-url', required=True, help='OGX server URL')
     parser.add_argument('--content-dir', required=True, help='Path to content directory')
     parser.add_argument('--pdf-dir', required=True, help='Path to PDF directory')
     parser.add_argument('--embedding-model', default='text-embedding-3-small', help='Embedding model to use')
@@ -368,14 +368,14 @@ if __name__ == "__main__":
     )
 
     logger.info("Starting vector store pre-build...")
-    logger.info(f"LlamaStack URL: {args.llama_stack_url}")
+    logger.info(f"OGX URL: {args.ogx_url}")
     logger.info(f"Content directory: {args.content_dir}")
     logger.info(f"PDF directory: {args.pdf_dir}")
     logger.info(f"Embedding model: {args.embedding_model}")
 
-    # Create LlamaStack client
-    client = LlamaStackClient(
-        base_url=args.llama_stack_url,
+    # Create OGX client
+    client = OgxClient(
+        base_url=args.ogx_url,
         timeout=args.timeout
     )
 

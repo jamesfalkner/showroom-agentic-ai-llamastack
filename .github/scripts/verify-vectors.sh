@@ -3,7 +3,7 @@
 
 set -e
 
-LLAMA_STACK_URL="${LLAMA_STACK_URL:-http://localhost:8321}"
+OGX_URL="${OGX_URL:-http://localhost:8321}"
 VECTOR_STORE_ID="${VECTOR_STORE_ID:-workshop-docs}"
 
 echo "========================================="
@@ -11,19 +11,19 @@ echo "Vector Store Verification"
 echo "========================================="
 echo ""
 
-# Check if LlamaStack is running
-echo "1. Checking LlamaStack connectivity..."
-if ! curl -s "${LLAMA_STACK_URL}/v1/models" > /dev/null; then
-    echo "✗ ERROR: Cannot connect to LlamaStack at ${LLAMA_STACK_URL}"
-    echo "  Make sure LlamaStack is running"
+# Check if OGX is running
+echo "1. Checking OGX connectivity..."
+if ! curl -s "${OGX_URL}/v1/models" > /dev/null; then
+    echo "✗ ERROR: Cannot connect to OGX at ${OGX_URL}"
+    echo "  Make sure OGX is running"
     exit 1
 fi
-echo "✓ LlamaStack is accessible"
+echo "✓ OGX is accessible"
 echo ""
 
 # Check vector store exists and get file count
 echo "2. Checking if vector store exists..."
-VECTOR_STORES=$(curl -s "${LLAMA_STACK_URL}/v1/vector_stores")
+VECTOR_STORES=$(curl -s "${OGX_URL}/v1/vector_stores")
 
 # Parse the vector store data using jq
 VECTOR_STORE_DATA=$(echo "$VECTOR_STORES" | jq -r ".data[] | select(.name == \"${VECTOR_STORE_ID}\")")
@@ -58,10 +58,10 @@ else
 fi
 echo ""
 
-# Check local filesystem (if .llama directory is accessible)
-if [ -d "/.llama" ]; then
+# Check local filesystem (if .ogx directory is accessible)
+if [ -d "/root/.ogx" ]; then
     echo "4. Checking local vector store files..."
-    VECTOR_DIR="/.llama/vector_stores/${VECTOR_STORE_ID}"
+    VECTOR_DIR="/root/.ogx/distributions/starter"
     if [ -d "$VECTOR_DIR" ]; then
         LOCAL_FILE_COUNT=$(find "$VECTOR_DIR" -type f 2>/dev/null | wc -l)
         echo "✓ Found ${LOCAL_FILE_COUNT} files in ${VECTOR_DIR}"
@@ -73,7 +73,7 @@ fi
 
 # List files in vector store to check attributes
 echo "5. Checking file attributes in vector store..."
-FILES_RESPONSE=$(curl -s "${LLAMA_STACK_URL}/v1/vector_stores/${ACTUAL_VS_ID}/files" 2>/dev/null || echo "{}")
+FILES_RESPONSE=$(curl -s "${OGX_URL}/v1/vector_stores/${ACTUAL_VS_ID}/files" 2>/dev/null || echo "{}")
 if echo "$FILES_RESPONSE" | jq -e '.data' > /dev/null 2>&1; then
     FILE_COUNT=$(echo "$FILES_RESPONSE" | jq -r '.data | length')
     echo "✓ Found ${FILE_COUNT} files in vector store"
@@ -91,7 +91,7 @@ echo ""
 # Test vector search (using the actual vector store ID, not the name)
 echo "6. Testing vector search..."
 TEST_QUERY="What is this workshop about?"
-SEARCH_RESPONSE=$(curl -s -X POST "${LLAMA_STACK_URL}/v1/vector_stores/${ACTUAL_VS_ID}/search" \
+SEARCH_RESPONSE=$(curl -s -X POST "${OGX_URL}/v1/vector_stores/${ACTUAL_VS_ID}/search" \
     -H "Content-Type: application/json" \
     -d "{\"query\": \"${TEST_QUERY}\", \"max_num_results\": 3}" 2>/dev/null || echo "{}")
 
