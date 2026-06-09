@@ -119,7 +119,7 @@ jobs:
             set -e
 
             SOURCE_DIR="${SOURCE_DIR:-/vector-data}"
-            TARGET_DIR="${TARGET_DIR:-/root/.ogx}"
+            TARGET_DIR="${TARGET_DIR:-/.ogx}"
 
             echo "Copying vector store from ${SOURCE_DIR} to ${TARGET_DIR}..."
 

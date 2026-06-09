@@ -59,9 +59,9 @@ fi
 echo ""
 
 # Check local filesystem (if .ogx directory is accessible)
-if [ -d "/root/.ogx" ]; then
+if [ -d "/.ogx" ]; then
     echo "4. Checking local vector store files..."
-    VECTOR_DIR="/root/.ogx/distributions/starter"
+    VECTOR_DIR="/.ogx/distributions/starter"
     if [ -d "$VECTOR_DIR" ]; then
         LOCAL_FILE_COUNT=$(find "$VECTOR_DIR" -type f 2>/dev/null | wc -l)
         echo "✓ Found ${LOCAL_FILE_COUNT} files in ${VECTOR_DIR}"
