@@ -40,7 +40,8 @@ async def stream_response(
             "model": model,
             "input": user_message,
             "instructions": instructions,
-            "stream": True
+            "stream": True,
+            "reasoning": {"effort": "low"},
         }
 
         # Add tools if provided
